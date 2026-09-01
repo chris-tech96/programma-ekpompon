@@ -2452,7 +2452,7 @@ async function writeBackPlayDate(slot, dateISO){
 
   const dateStr = formatDateForSheet(dateISO);
   const colLetter = columnNumberToLetter(targetCol + 1);
-  const sheetRow = rawRowIdx + 3;
+  const sheetRow = rawRowIdx + 1;
   const safeSheetName = show.name.replace(/'/g, "''");
   const range = `'${safeSheetName}'!${colLetter}${sheetRow}`;
 
