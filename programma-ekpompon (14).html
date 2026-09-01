@@ -1,0 +1,6690 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Πρόγραμμα Εκπομπών</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#15171b;
+  --panel:#1c1f24;
+  --panel-2:#23262c;
+  --border:#33383f;
+  --border-soft:#282c32;
+  --text:#ece9e2;
+  --text-dim:#9aa0a8;
+  --text-faint:#686e77;
+  --accent:#e8a33d;
+  --accent-soft:#3a2f1e;
+  --accent-2:#3e8e7e;
+  --live:#d6544a;
+  --font-d:'Oswald',Arial,sans-serif;
+  --font-b:'Work Sans',Arial,sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-b);
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+}
+
+::selection{
+  background:var(--accent);
+  color:#1a1a1a;
+}
+
+.app{
+  max-width:1760px;
+  margin:0 auto;
+  padding:28px 24px 80px;
+}
+
+.topbar{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:2px solid var(--border);
+  padding-bottom:16px;
+  margin-bottom:22px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.brand{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+
+.brand .dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--accent);
+  display:inline-block;
+  transform:translateY(-2px);
+}
+
+h1{
+  font-family:var(--font-d);
+  font-weight:600;
+  font-size:26px;
+  letter-spacing:.2px;
+  margin:0;
+  color:var(--text);
+}
+
+.subtitle{
+  color:var(--text-dim);
+  font-size:12.5px;
+  margin-top:2px;
+}
+
+nav.tabs{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+}
+
+nav.tabs button{
+  font-family:var(--font-d);
+  font-size:14px;
+  letter-spacing:.3px;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  padding:8px 16px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:.15s;
+}
+
+nav.tabs button:hover{
+  color:var(--text);
+  border-color:var(--text-dim);
+}
+
+nav.tabs button.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#1a1408;
+  font-weight:600;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-radius:4px;
+  padding:20px 22px;
+  margin-bottom:18px;
+}
+
+.panel h2{
+  font-family:var(--font-d);
+  font-size:16px;
+  font-weight:600;
+  margin:0 0 4px;
+  letter-spacing:.2px;
+}
+
+.panel .hint{
+  color:var(--text-dim);
+  font-size:12.5px;
+  margin:0 0 16px;
+  max-width:760px;
+}
+
+.hidden{
+  display:none !important;
+}
+
+label{
+  display:block;
+  font-size:12px;
+  color:var(--text-dim);
+  margin-bottom:4px;
+}
+
+input[type=text],
+input[type=time],
+input[type=number],
+input[type=url],
+select{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:3px;
+  font-family:var(--font-b);
+  font-size:13.5px;
+  width:100%;
+}
+
+input:focus,
+select:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+
+.row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.row > div{
+  flex:1;
+  min-width:140px;
+}
+
+.btn{
+  font-family:var(--font-b);
+  font-weight:600;
+  font-size:13px;
+  background:var(--accent);
+  color:#1a1408;
+  border:none;
+  border-radius:3px;
+  padding:9px 16px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.btn:hover{
+  filter:brightness(1.08);
+}
+
+.btn.secondary{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text);
+}
+
+.btn.secondary:hover{
+  border-color:var(--text-dim);
+}
+
+.btn.ghost{
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  padding:6px 8px;
+}
+
+.btn.ghost:hover{
+  color:var(--live);
+}
+
+.btn.small{
+  padding:6px 11px;
+  font-size:12px;
+}
+
+.btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+/* SHOWS */
+
+.show-card{
+  border:1px solid var(--border-soft);
+  border-radius:4px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  background:var(--panel-2);
+}
+
+.show-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.show-name{
+  font-family:var(--font-d);
+  font-size:16px;
+  font-weight:600;
+}
+
+.show-meta{
+  color:var(--text-faint);
+  font-size:12px;
+  margin-top:2px;
+}
+
+.show-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.status-tag{
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+}
+
+.status-tag.ok{
+  border-color:var(--accent-2);
+  color:var(--accent-2);
+}
+
+.status-tag.err{
+  border-color:var(--live);
+  color:var(--live);
+}
+
+.adv{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--border-soft);
+  display:none;
+}
+
+.adv.open{
+  display:block;
+}
+
+.adv .row{
+  align-items:end;
+}
+
+.column-help{
+  margin-top:10px;
+  padding:9px 11px;
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-radius:3px;
+  color:var(--text-dim);
+  font-size:12px;
+}
+
+.column-preview{
+  margin-top:8px;
+  color:var(--accent);
+  font-family:var(--font-d);
+  font-size:13px;
+}
+
+table.episodes{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  font-size:13px;
+}
+
+table.episodes th{
+  text-align:left;
+  color:var(--text-dim);
+  font-weight:500;
+  font-size:11.5px;
+  padding:6px 8px;
+  border-bottom:1px solid var(--border);
+}
+
+table.episodes td{
+  padding:7px 8px;
+  border-bottom:1px solid var(--border-soft);
+}
+
+table.episodes tr:hover td{
+  background:rgba(255,255,255,.02);
+}
+
+.dur-pill{
+  font-family:var(--font-d);
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+
+/* WEEK */
+
+.week-grid{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:12px;
+}
+
+@media (max-width:1760px){
+  .week-grid{
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  }
+}
+
+.day-col{
+  background:var(--panel-2);
+  border:1px solid var(--border-soft);
+  border-radius:4px;
+  min-height:420px;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.day-head{
+  padding:10px 12px;
+  border-bottom:1px solid var(--border-soft);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+  min-height:46px;
+}
+
+.day-head .name{
+  font-family:var(--font-d);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.3px;
+  line-height:1.3;
+}
+
+.day-body{
+  padding:10px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.slot{
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-left:3px solid var(--accent);
+  border-radius:3px;
+  padding:9px 11px;
+  cursor:pointer;
+  transition:.12s;
+  line-height:1.45;
+}
+
+.slot:hover{
+  border-color:var(--text-dim);
+  border-left-color:var(--accent);
+  background:#20242a;
+}
+
+.slot .t{
+  font-family:var(--font-d);
+  font-variant-numeric:tabular-nums;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.3px;
+  color:var(--accent);
+  margin-bottom:2px;
+}
+
+.slot .s{
+  font-size:12.5px;
+  color:var(--text-dim);
+  margin-top:1px;
+}
+
+.slot .e{
+  font-size:12.5px;
+  font-weight:500;
+  margin-top:1px;
+  padding-right:15px;
+}
+
+.empty-note{
+  color:var(--text-faint);
+  font-size:12px;
+  padding:10px;
+  text-align:center;
+}
+
+.add-slot-btn{
+  margin:8px;
+  font-size:12px;
+  padding:8px;
+  border:1px dashed var(--border);
+  background:transparent;
+  color:var(--text-dim);
+  border-radius:3px;
+  cursor:pointer;
+}
+
+.add-slot-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+}
+
+/* MONTH */
+
+.month-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+
+.month-header .label{
+  font-family:var(--font-d);
+  font-size:18px;
+  font-weight:600;
+  min-width:170px;
+}
+
+.day-block{
+  border:1px solid var(--border-soft);
+  background:var(--panel-2);
+  border-radius:4px;
+  margin-bottom:8px;
+}
+
+.day-block-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  cursor:pointer;
+  gap:10px;
+}
+
+.day-block-head .dinfo{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+
+.day-block-head .wd{
+  font-family:var(--font-d);
+  font-size:14px;
+  font-weight:600;
+}
+
+.day-block-head .dt{
+  color:var(--text-dim);
+  font-size:12.5px;
+}
+
+.day-block-head .count{
+  color:var(--text-faint);
+  font-size:12px;
+}
+
+.day-block-body{
+  padding:0 14px 12px;
+  display:none;
+}
+
+.day-block-body.open{
+  display:block;
+}
+
+.day-block.override .wd{
+  color:var(--accent);
+}
+
+.mini-slot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 0;
+  border-bottom:1px solid var(--border-soft);
+}
+
+.mini-slot:last-child{
+  border-bottom:none;
+}
+
+.mini-slot .t{
+  font-family:var(--font-d);
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+  width:100px;
+  flex-shrink:0;
+}
+
+.mini-slot .info{
+  flex:1;
+  font-size:13px;
+}
+
+.mini-slot .info .s{
+  color:var(--text-dim);
+  font-size:12px;
+}
+
+/* SIDE PANEL */
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:stretch;
+  justify-content:flex-end;
+  z-index:50;
+}
+
+.overlay.open{
+  display:flex;
+}
+
+.side-panel{
+  width:680px;
+  max-width:94vw;
+  background:var(--panel);
+  border-left:1px solid var(--border);
+  padding:22px;
+  overflow-y:auto;
+}
+
+.side-panel h3{
+  font-family:var(--font-d);
+  font-size:17px;
+  margin:0 0 16px;
+}
+
+.field{
+  margin-bottom:14px;
+}
+
+.episode-picker{
+  max-height:460px;
+  overflow-y:auto;
+  border:1px solid var(--border);
+  border-radius:3px;
+  margin-top:6px;
+}
+
+.episode-opt{
+  padding:8px 10px;
+  font-size:13px;
+  cursor:pointer;
+  border-bottom:1px solid var(--border-soft);
+  display:flex;
+  justify-content:space-between;
+}
+
+.episode-opt:last-child{
+  border-bottom:none;
+}
+
+.episode-opt:hover{
+  background:var(--panel-2);
+}
+
+.episode-opt.sel{
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+
+.episode-opt .d{
+  color:var(--text-faint);
+  font-variant-numeric:tabular-nums;
+}
+
+.calc-end{
+  background:var(--panel-2);
+  border:1px solid var(--border-soft);
+  border-radius:3px;
+  padding:10px 12px;
+  margin-top:4px;
+  font-size:13px;
+}
+
+.calc-end b{
+  color:var(--accent);
+  font-family:var(--font-d);
+  font-variant-numeric:tabular-nums;
+}
+
+.panel-actions{
+  display:flex;
+  gap:8px;
+  margin-top:20px;
+}
+
+/* EXPORT */
+
+.export-bar{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+
+/* PRINT */
+
+#print-root{
+  display:none;
+}
+
+@page{
+  margin:16mm 14mm;
+}
+
+@media print{
+  body *{
+    visibility:hidden;
+  }
+
+  #print-root,
+  #print-root *{
+    visibility:visible;
+  }
+
+  #print-root{
+    display:block;
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    color:#1a1a1a;
+    background:#fff;
+    font-family:'Work Sans',Arial,sans-serif;
+  }
+
+  .p-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:3px solid #e8a33d;
+    padding-bottom:10px;
+    margin-bottom:20px;
+  }
+
+  .p-brand{
+    font-family:'Oswald',Arial,sans-serif;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:#999;
+    margin:0 0 3px;
+  }
+
+  .p-title{
+    font-family:'Oswald',Arial,sans-serif;
+    font-size:25px;
+    font-weight:700;
+    letter-spacing:.2px;
+    margin:0;
+    color:#141414;
+  }
+
+  .p-sub{
+    color:#777;
+    font-size:11.5px;
+    text-align:right;
+  }
+
+  .p-day{
+    margin-bottom:16px;
+    break-inside:avoid;
+  }
+
+  .p-day h4{
+    font-family:'Oswald',Arial,sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+    color:#fff;
+    background:#2a2d33;
+    padding:6px 12px;
+    margin:0 0 6px;
+    border-radius:2px;
+  }
+
+  .p-row{
+    font-size:12.5px;
+    padding:5px 4px;
+    border-bottom:1px solid #eee;
+  }
+
+  .p-row:nth-child(even){
+    background:#fbf6ec;
+  }
+
+  .p-row-main{
+    display:flex;
+    gap:12px;
+    align-items:baseline;
+  }
+
+  .p-row .pt{
+    width:90px;
+    font-family:'Oswald',Arial,sans-serif;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    color:#111;
+    flex-shrink:0;
+  }
+
+  .p-row .pe{
+    flex:1;
+  }
+
+  .p-row .ps{
+    color:#888;
+    font-size:11.5px;
+  }
+
+  .p-path-inline{
+    display:block;
+    border-left:3px solid #e8a33d;
+    background:#fbf6ec;
+    padding:4px 9px;
+    margin:4px 0 2px 102px;
+    font-family:'Oswald',Arial,sans-serif;
+    font-weight:600;
+    font-size:10.5px;
+    color:#555;
+    word-break:break-all;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div>
+        <h1><span class="dot"></span> Πρόγραμμα Εκπομπών</h1>
+        <div class="subtitle">
+          Πηγή δεδομένων: Google Sheets — ένα φύλλο ανά εκπομπή
+        </div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button data-tab="shows" class="active">Εκπομπές</button>
+      <button data-tab="week">Πρόγραμμα Εβδομάδας</button>
+      <button data-tab="month">Πρόγραμμα Μήνα</button>
+    </nav>
+  </div>
+
+  <!-- SHOWS -->
+
+  <section id="tab-shows">
+
+    <div class="panel">
+
+      <h2>Το Google Sheet σου</h2>
+
+      <p class="hint">
+        Μοιράσου ολόκληρο το βιβλίο μία φορά
+        (Κοινή χρήση → «Όποιος έχει τον σύνδεσμο» → Θεατής)
+        και βάλε το link του Google Sheet εδώ.
+      </p>
+
+      <div class="row">
+
+        <div style="flex:2">
+          <label>Link του Google Sheet</label>
+          <input
+            type="url"
+            id="ss-url"
+            placeholder="https://docs.google.com/spreadsheets/d/...">
+        </div>
+
+        <div style="flex:1.4">
+          <label>
+            Google API key
+            <span style="color:var(--text-faint)">
+              (διαβάζει όλες τις καρτέλες αυτόματα)
+            </span>
+          </label>
+
+          <input
+            type="text"
+            id="ss-key"
+            placeholder="AIzaSy...">
+        </div>
+
+        <div style="flex:0 0 auto;align-self:end;">
+          <button class="btn" id="sync-btn">
+            Φόρτωση / Ανανέωση όλων
+          </button>
+        </div>
+
+      </div>
+
+      <p class="hint" id="sync-status" style="margin:10px 0 0;"></p>
+
+      <details style="margin-top:6px;">
+
+        <summary style="cursor:pointer;color:var(--text-dim);font-size:12.5px;">
+          Πού βρίσκω το API key; (μία φορά, δωρεάν)
+        </summary>
+
+        <p class="hint" style="margin:8px 0 0;">
+          Google Cloud Console → δημιούργησε ένα project →
+          APIs & Services → Library → Google Sheets API →
+          Credentials → Create Credentials → API key.
+        </p>
+
+      </details>
+
+      <details style="margin-top:10px;">
+
+        <summary style="cursor:pointer;color:var(--text-dim);font-size:12.5px;">
+          Χωρίς API key: γράψε τα ονόματα καρτελών χειροκίνητα
+        </summary>
+
+        <div class="row" style="margin-top:10px;">
+
+          <div style="flex:2">
+            <label>Όνομα καρτέλας</label>
+            <input
+              type="text"
+              id="tab-name-input"
+              placeholder="π.χ. Καλημέρα Θεσσαλονίκη">
+          </div>
+
+          <div style="flex:0 0 auto;align-self:end;">
+            <button class="btn secondary" id="add-tab-name">
+              + Προσθήκη καρτέλας
+            </button>
+          </div>
+
+        </div>
+
+        <div
+          id="tab-names-chips"
+          style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+        </div>
+
+      </details>
+
+      <details style="margin-top:10px;">
+
+        <summary style="cursor:pointer;color:var(--text-dim);font-size:12.5px;">
+          Προχωρημένο: Εγγραφή πίσω στο Google Sheet (όταν προγραμματίζεις ένα επεισόδιο, σημειώνει αυτόματα την ημερομηνία στο sheet)
+        </summary>
+
+        <p class="hint" style="margin:8px 0;">
+          Αυτό λειτουργεί μόνο αν το αρχείο "τρέχει" από πραγματική διεύθυνση (όχι διπλό κλικ στο αρχείο),
+          και απαιτεί ένα δικό σου <strong>OAuth Client ID</strong> (διαφορετικό από το API key).
+        </p>
+
+        <details>
+          <summary style="cursor:pointer;color:var(--text-dim);font-size:12px;">Πώς φτιάχνω OAuth Client ID;</summary>
+          <p class="hint" style="margin:8px 0;">
+            Google Cloud Console → το ίδιο project όπου έφτιαξες το API key → APIs &amp; Services → Credentials →
+            Create Credentials → OAuth client ID → τύπος "Web application" → στο "Authorized JavaScript origins"
+            πρόσθεσε ακριβώς τη διεύθυνση απ' όπου θα ανοίγεις αυτό το αρχείο (π.χ. https://username.github.io ή http://localhost:8000).
+            Αντέγραψε το Client ID που θα σου δώσει (τελειώνει σε .apps.googleusercontent.com).
+          </p>
+        </details>
+
+        <div class="row" style="margin-top:10px;">
+          <div style="flex:2">
+            <label>OAuth Client ID</label>
+            <input type="text" id="oauth-client-id" placeholder="xxxxxxxxxx.apps.googleusercontent.com">
+          </div>
+          <div style="flex:0 0 auto;align-self:end;">
+            <button class="btn secondary" id="google-signin-btn">Σύνδεση με Google</button>
+          </div>
+        </div>
+
+        <p class="hint" id="google-auth-status" style="margin:10px 0 0;"></p>
+
+      </details>
+
+      <details style="margin-top:10px;">
+
+        <summary style="cursor:pointer;color:var(--text-dim);font-size:12.5px;">
+          Προσθήκη μεμονωμένης εκπομπής με δικό της link
+        </summary>
+
+        <div class="row" style="margin-top:10px;">
+
+          <div style="flex:1.2">
+            <label>Όνομα εκπομπής</label>
+            <input
+              type="text"
+              id="new-show-name"
+              placeholder="π.χ. Καλημέρα Θεσσαλονίκη">
+          </div>
+
+          <div style="flex:2">
+            <label>Δημόσιο link (CSV)</label>
+            <input
+              type="url"
+              id="new-show-url"
+              placeholder="https://docs.google.com/.../pub?output=csv">
+          </div>
+
+          <div style="flex:0 0 auto;align-self:end;">
+            <button class="btn secondary" id="add-show-btn">
+              Προσθήκη
+            </button>
+          </div>
+
+        </div>
+
+      </details>
+
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;">
+
+      <button class="btn secondary small" id="refresh-all-btn">
+        Ανανέωση όλων των εκπομπών
+      </button>
+
+      <button class="btn secondary small" id="minimize-all-btn">
+        Ελαχιστοποίηση όλων
+      </button>
+
+    </div>
+
+    <div id="shows-list"></div>
+
+  </section>
+
+  <!-- WEEK -->
+
+  <section id="tab-week" class="hidden">
+
+    <div class="panel">
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+
+        <h2>Εβδομαδιαίο πρότυπο</h2>
+
+        <span
+          id="week-range-label"
+          style="color:var(--text-dim);font-size:12.5px;">
+        </span>
+
+      </div>
+
+      <p class="hint">
+        Η εβδομάδα πάει Δευτέρα → την επόμενη Δευτέρα (8 στήλες).
+        Οι πρώτες 7 είναι το πρότυπο (επαναλαμβάνεται κάθε εβδομάδα).
+        Η 8η (επόμενη Δευτέρα) είναι η πραγματική επόμενη ημερομηνία —
+        δείχνει αρχικά ό,τι έχει το πρότυπο, αλλά μπορείς να την αλλάξεις
+        ξεχωριστά χωρίς να πειράξεις το πρότυπο.
+        Οι ώρες έναρξης μένουν σταθερές και η ώρα λήξης
+        υπολογίζεται από τη διάρκεια του επεισοδίου.
+      </p>
+
+      <div class="week-grid" id="week-grid"></div>
+
+      <div class="export-bar">
+
+        <button class="btn secondary small" id="week-print">
+          Εξαγωγή PDF (εκτύπωση)
+        </button>
+
+        <button class="btn secondary small" id="week-word">
+          Εξαγωγή Word (.doc)
+        </button>
+
+        <button
+          class="btn ghost small"
+          id="week-clear">
+          Καθαρισμός εβδομάδας
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- MONTH -->
+
+  <section id="tab-month" class="hidden">
+
+    <div class="panel">
+
+      <div class="month-header">
+
+        <button class="btn secondary small" id="month-prev">
+          &larr;
+        </button>
+
+        <div class="label" id="month-label"></div>
+
+        <button class="btn secondary small" id="month-next">
+          &rarr;
+        </button>
+
+        <button
+          class="btn small"
+          id="month-generate"
+          style="margin-left:auto;">
+          Δημιουργία από το εβδομαδιαίο πρότυπο
+        </button>
+
+      </div>
+
+      <p class="hint">
+        Ο μήνας γεμίζει από το εβδομαδιαίο πρότυπο.
+        Μπορείς να κάνεις μεμονωμένη αλλαγή σε συγκεκριμένη ημερομηνία
+        χωρίς να αλλάξεις το πρότυπο.
+      </p>
+
+      <div id="month-list"></div>
+
+      <div class="export-bar">
+
+        <button class="btn secondary small" id="month-print">
+          Εξαγωγή PDF (εκτύπωση)
+        </button>
+
+        <button class="btn secondary small" id="month-word">
+          Εξαγωγή Word (.doc)
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</div>
+
+<!-- SLOT EDITOR -->
+
+<div class="overlay" id="overlay">
+
+  <div class="side-panel">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+
+      <h3 id="sp-title">Νέα ζώνη</h3>
+
+      <button
+        id="sp-close-x"
+        title="Κλείσιμο"
+        style="background:transparent;border:none;color:var(--text-faint);font-size:22px;line-height:1;cursor:pointer;padding:0 4px;">
+        &times;
+      </button>
+
+    </div>
+
+    <div class="field">
+
+      <label>Ώρα έναρξης</label>
+
+      <input
+        type="time"
+        id="sp-time"
+        style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 14px;color:var(--accent);letter-spacing:1px;">
+
+    </div>
+
+    <div class="field">
+
+      <label>Εκπομπή</label>
+
+      <select id="sp-show"></select>
+
+    </div>
+
+    <div class="field">
+
+      <label>
+        Επεισόδιο
+        <span style="color:var(--text-faint)">
+          (αναζήτηση)
+        </span>
+      </label>
+
+      <div class="row" style="margin-top:8px;margin-bottom:0;">
+        <div>
+          <input
+            type="text"
+            id="sp-search"
+            placeholder="Πληκτρολόγησε για αναζήτηση...">
+        </div>
+        <div style="flex:0 0 200px;">
+          <select id="sp-sort">
+            <option value="default">Ταξινόμηση: προεπιλογή</option>
+            <option value="title-asc">Τίτλος (Α-Ω)</option>
+            <option value="title-desc">Τίτλος (Ω-Α)</option>
+            <option value="played-oldest">Παλαιότερη προβολή πρώτα</option>
+            <option value="played-recent">Πιο πρόσφατη προβολή πρώτα</option>
+            <option value="duration-asc">Διάρκεια (μικρότερη πρώτα)</option>
+            <option value="duration-desc">Διάρκεια (μεγαλύτερη πρώτα)</option>
+          </select>
+        </div>
+      </div>
+
+      <div
+        class="episode-picker"
+        id="sp-episodes">
+      </div>
+
+    </div>
+
+    <div class="calc-end" id="sp-calc">
+      Επίλεξε επεισόδιο για να δεις την ώρα λήξης.
+    </div>
+
+    <div class="panel-actions">
+
+      <button class="btn" id="sp-save">
+        Αποθήκευση
+      </button>
+
+      <button class="btn secondary" id="sp-cancel">
+        Άκυρο
+      </button>
+
+      <button
+        class="btn ghost"
+        id="sp-delete"
+        style="margin-left:auto;">
+        Διαγραφή
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- COPY DAY -->
+
+<div class="overlay" id="copy-overlay">
+
+  <div class="side-panel" style="width:320px;">
+
+    <h3>Αντιγραφή ημέρας</h3>
+
+    <p class="hint" id="copy-from-label"></p>
+
+    <div
+      id="copy-days-list"
+      style="display:flex;flex-direction:column;gap:8px;margin:14px 0;">
+    </div>
+
+    <div class="panel-actions">
+
+      <button class="btn" id="copy-apply">
+        Αντιγραφή
+      </button>
+
+      <button class="btn secondary" id="copy-cancel">
+        Άκυρο
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="print-root"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+
+/* ================= STATE ================= */
+
+const DAYS = [
+  'Δευτέρα',
+  'Τρίτη',
+  'Τετάρτη',
+  'Πέμπτη',
+  'Παρασκευή',
+  'Σάββατο',
+  'Κυριακή'
+];
+
+const DAYS_SHORT = [
+  'Δευ',
+  'Τρι',
+  'Τετ',
+  'Πεμ',
+  'Παρ',
+  'Σαβ',
+  'Κυρ'
+];
+
+const STORAGE_KEY = 'schedule-app-state-v2';
+
+let state = {
+  spreadsheet:null,
+  shows:[],
+  weekly:{},
+  monthly:{},
+  currentMonth:null
+};
+
+DAYS.forEach(d => {
+  state.weekly[d] = [];
+});
+
+let uid = () =>
+  Math.random().toString(36).slice(2,10);
+
+/* ================= GOOGLE WRITE-BACK (OAuth) ================= */
+
+let googleTokenClient = null;
+let googleAccessToken = null;
+let googleAuthPending = false;
+
+/* ================= STORAGE ================= */
+
+async function storageSet(key,value){
+
+  if(window.storage &&
+     typeof window.storage.set === 'function'){
+
+    try{
+      return await window.storage.set(
+        key,
+        value,
+        false
+      );
+    }catch(e){}
+  }
+
+  try{
+    localStorage.setItem(key,value);
+    return {key,value};
+  }catch(e){
+    return null;
+  }
+}
+
+async function storageGet(key){
+
+  if(window.storage &&
+     typeof window.storage.get === 'function'){
+
+    try{
+      return await window.storage.get(
+        key,
+        false
+      );
+    }catch(e){}
+  }
+
+  try{
+
+    const v = localStorage.getItem(key);
+
+    return v !== null
+      ? {key,value:v}
+      : null;
+
+  }catch(e){
+
+    return null;
+
+  }
+}
+
+async function saveState(){
+
+  await storageSet(
+    STORAGE_KEY,
+    JSON.stringify(state)
+  );
+
+}
+
+async function loadState(){
+
+  try{
+
+    const res =
+      await storageGet(STORAGE_KEY);
+
+    if(res && res.value){
+
+      const loaded =
+        JSON.parse(res.value);
+
+      state =
+        Object.assign(
+          state,
+          loaded
+        );
+
+    }
+
+  }catch(e){}
+
+  DAYS.forEach(day => {
+
+    if(!state.weekly[day])
+      state.weekly[day] = [];
+
+  });
+
+  const now = new Date();
+
+  if(!state.currentMonth){
+
+    state.currentMonth = {
+      year:now.getFullYear(),
+      month:now.getMonth()
+    };
+
+  }
+
+  if(state.spreadsheet){
+
+    document.getElementById('ss-url').value =
+      state.spreadsheet.url || '';
+
+    document.getElementById('ss-key').value =
+      state.spreadsheet.apiKey || '';
+
+    document.getElementById('oauth-client-id').value =
+      state.spreadsheet.oauthClientId || '';
+
+  }
+
+  renderTabChips();
+
+}
+
+/* ================= SHEET ================= */
+
+function extractSpreadsheetId(url){
+
+  url = url.trim();
+
+  const m =
+    url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+
+  if(m)
+    return m[1];
+
+  if(/^[a-zA-Z0-9-_]{20,}$/.test(url))
+    return url;
+
+  return null;
+
+}
+
+function renderTabChips(){
+
+  const box =
+    document.getElementById(
+      'tab-names-chips'
+    );
+
+  const names =
+    (state.spreadsheet &&
+     state.spreadsheet.tabNames) || [];
+
+  box.innerHTML =
+    names.map(name => `
+
+      <span
+        style="
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          background:var(--panel-2);
+          border:1px solid var(--border);
+          border-radius:20px;
+          padding:5px 6px 5px 12px;
+          font-size:13px;
+        ">
+
+        ${escapeHtml(name)}
+
+        <button
+          data-act="remove-tab-name"
+          data-name="${escapeHtml(name)}"
+          style="
+            background:transparent;
+            border:none;
+            color:var(--text-faint);
+            cursor:pointer;
+            font-size:15px;
+            line-height:1;
+            padding:2px 6px;
+          ">
+          &times;
+        </button>
+
+      </span>
+
+    `).join('')
+
+    ||
+
+    `<span style="color:var(--text-faint);font-size:12.5px;">
+      Δεν έχεις προσθέσει ακόμα κάποια καρτέλα.
+    </span>`;
+
+}
+
+/* ================= CSV ================= */
+
+function parseCSV(text){
+
+  const rows = [];
+
+  let row = [];
+  let cur = '';
+  let inQuotes = false;
+
+  for(let i=0;i<text.length;i++){
+
+    const c = text[i];
+
+    if(inQuotes){
+
+      if(c === '"'){
+
+        if(text[i+1] === '"'){
+
+          cur += '"';
+          i++;
+
+        }else{
+
+          inQuotes = false;
+
+        }
+
+      }else{
+
+        cur += c;
+
+      }
+
+    }else{
+
+      if(c === '"')
+        inQuotes = true;
+
+      else if(c === ','){
+
+        row.push(cur);
+        cur='';
+
+      }else if(c === '\n'){
+
+        row.push(cur);
+        rows.push(row);
+
+        row=[];
+        cur='';
+
+      }else if(c === '\r'){
+
+      }else{
+
+        cur += c;
+
+      }
+
+    }
+
+  }
+
+  if(cur.length || row.length){
+
+    row.push(cur);
+    rows.push(row);
+
+  }
+
+  return rows.filter(
+    r => r.some(
+      c => c.trim() !== ''
+    )
+  );
+
+}
+
+/* ================= DURATION ================= */
+
+function parseDuration(str){
+
+  if(str === undefined ||
+     str === null)
+    return null;
+
+  str = String(str).trim();
+
+  if(!str)
+    return null;
+
+  // Google Sheets sometimes exports a leading apostrophe for text-forced cells
+  str = str.replace(/^'+/, '').trim();
+
+  if(!str)
+    return null;
+
+  let isAM = false, isPM = false;
+
+  const ampmMatch =
+    str.match(
+      /\s*(π\.?\s?μ\.?|μ\.?\s?μ\.?|am|pm)\s*$/i
+    );
+
+  if(ampmMatch){
+
+    const marker = ampmMatch[1].toLowerCase().replace(/[.\s]/g,'');
+
+    if(marker === 'πμ' || marker === 'am') isAM = true;
+    if(marker === 'μμ' || marker === 'pm') isPM = true;
+
+    str = str.slice(0, ampmMatch.index).trim();
+
+  }
+
+  function fixHour12(h){
+    if(!isAM && !isPM) return h;
+    if(isAM){
+      return h === 12 ? 0 : h;
+    }
+    // isPM
+    return h === 12 ? 12 : h + 12;
+  }
+
+  let m3 =
+    str.match(
+      /^(\d{1,3}):(\d{1,2}):(\d{1,2})$/
+    );
+
+  if(m3 && (+m3[2]) < 60 && (+m3[3]) < 60){
+
+    return (
+      fixHour12(+m3[1])*3600 +
+      (+m3[2])*60 +
+      (+m3[3])
+    );
+
+  }
+
+  let m2 =
+    str.match(
+      /^(\d{1,3}):(\d{1,2})$/
+    );
+
+  if(m2 && (+m2[2]) < 60){
+
+    if(ampmMatch){
+
+      // AM/PM marker means this is H:MM (a real time-of-day value), not M:SS
+      return (
+        fixHour12(+m2[1])*3600 +
+        (+m2[2])*60
+      );
+
+    }
+
+    // no AM/PM: typical episode-length shorthand, M:SS
+    return (
+      (+m2[1])*60 +
+      (+m2[2])
+    );
+
+  }
+
+  if(/^0?\.\d{3,}$/.test(str)){
+
+    return Math.round(parseFloat(str) * 86400);
+
+  }
+
+  let n =
+    str.match(
+      /(\d+([.,]\d+)?)/
+    );
+
+  if(n){
+
+    return Math.round(
+      parseFloat(
+        n[1].replace(',','.')
+      ) * 60
+    );
+
+  }
+
+  return null;
+
+}
+
+function formatDuration(sec){
+
+  if(sec === null ||
+     sec === undefined)
+    return '';
+
+  sec = Math.round(sec);
+
+  const h =
+    Math.floor(sec/3600);
+
+  const m =
+    Math.floor(
+      (sec%3600)/60
+    );
+
+  const s =
+    sec%60;
+
+  if(h > 0){
+
+    return (
+      h + ':' +
+      String(m).padStart(2,'0') +
+      ':' +
+      String(s).padStart(2,'0')
+    );
+
+  }
+
+  return (
+    m + ':' +
+    String(s).padStart(2,'0')
+  );
+
+}
+
+/* ================= COLUMN HELPERS ================= */
+
+function columnNumberToLetter(n){
+
+  let result = '';
+
+  while(n > 0){
+
+    const rem = (n-1)%26;
+
+    result =
+      String.fromCharCode(
+        65 + rem
+      ) + result;
+
+    n =
+      Math.floor(
+        (n-1)/26
+      );
+
+  }
+
+  return result;
+
+}
+
+function columnLetterToNumber(letter){
+
+  letter =
+    String(letter)
+      .trim()
+      .toUpperCase();
+
+  if(!/^[A-Z]+$/.test(letter))
+    return null;
+
+  let num = 0;
+
+  for(const ch of letter){
+
+    num =
+      num * 26 +
+      (ch.charCodeAt(0)-64);
+
+  }
+
+  return num;
+
+}
+
+function detectColumns(firstRow){
+
+  let titleIdx = -1;
+  let durIdx = -1;
+  let foundHeaderText = false;
+
+  firstRow.forEach((h,i)=>{
+
+    const low =
+      (h||'').toLowerCase();
+
+    if(
+      titleIdx === -1 &&
+      /τιτλ|title|επεισ|όνομα|onoma/.test(low)
+    ){
+
+      titleIdx = i;
+      foundHeaderText = true;
+
+    }
+
+    if(
+      durIdx === -1 &&
+      /διαρκ|duration|λεπτ|min|χρόν|xron/.test(low)
+    ){
+
+      durIdx = i;
+      foundHeaderText = true;
+
+    }
+
+  });
+
+  if(titleIdx === -1)
+    titleIdx = 0;
+
+  if(durIdx === -1)
+    durIdx = 1;
+
+  const looksLikeData =
+    parseDuration(
+      firstRow[durIdx]
+    ) !== null;
+
+  const hasHeader =
+    foundHeaderText &&
+    !looksLikeData;
+
+  return {
+    titleIdx,
+    durIdx,
+    hasHeader
+  };
+
+}
+
+/* ================= DATES ================= */
+
+function parseLooseDate(str){
+
+  if(!str)
+    return null;
+
+  str =
+    String(str)
+      .trim()
+      .replace(/[,;]+$/,'');
+
+  if(!str)
+    return null;
+
+  const m =
+    str.match(
+      /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/
+    );
+
+  if(!m)
+    return null;
+
+  let day = +m[1];
+  let month = +m[2];
+
+  if(
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  )
+    return null;
+
+  let year =
+    m[3]
+      ? (
+          m[3].length === 2
+            ? 2000 + +m[3]
+            : +m[3]
+        )
+      : null;
+
+  const now = new Date();
+
+  if(year === null){
+
+    year =
+      now.getFullYear();
+
+    const cand =
+      new Date(
+        year,
+        month-1,
+        day
+      );
+
+    if(
+      (cand-now)/86400000 > 60
+    ){
+
+      year--;
+
+    }
+
+  }
+
+  const d =
+    new Date(
+      year,
+      month-1,
+      day
+    );
+
+  if(isNaN(d.getTime()))
+    return null;
+
+  if(
+    d.getFullYear() !== year ||
+    d.getMonth() !== month-1 ||
+    d.getDate() !== day
+  ){
+
+    return null;
+
+  }
+
+  return d;
+
+}
+
+function dateToISO(d){
+
+  return (
+    d.getFullYear() +
+    '-' +
+    String(
+      d.getMonth()+1
+    ).padStart(2,'0') +
+    '-' +
+    String(
+      d.getDate()
+    ).padStart(2,'0')
+  );
+
+}
+
+function formatISODateGreek(iso){
+
+  if(!iso)
+    return '';
+
+  const [
+    y,m,d
+  ] = iso.split('-').map(Number);
+
+  return new Date(
+    y,
+    m-1,
+    d
+  ).toLocaleDateString(
+    'el-GR'
+  );
+
+}
+
+/* ================= EPISODES ================= */
+
+function isPathLike(s){
+
+  if(!s)
+    return false;
+
+  s = s.trim();
+
+  const backslashCount =
+    (s.match(/\\/g)||[]).length;
+
+  return (
+    /^\\\\/.test(s) ||
+    backslashCount >= 2 ||
+    /^https?:\/\//i.test(s)
+  );
+
+}
+
+function computeEpisodes(show){
+
+  const rows =
+    show.rawRows || [];
+
+  const dataRows =
+    show.hasHeader
+      ? rows.slice(1)
+      : rows;
+
+  const tIdx =
+    show.titleCol;
+
+  const dIdx =
+    show.durCol;
+
+  const dateStart =
+    show.dateStartCol !== undefined &&
+    show.dateStartCol !== null
+      ? show.dateStartCol
+      : 3;
+
+  const paths = [];
+  const episodes = [];
+  let currentPath = null;
+
+  dataRows.forEach((r, dataRowIdx)=>{
+
+    const pathCell =
+      r.find(cell => isPathLike((cell||'').trim()));
+
+    if(pathCell){
+
+      currentPath = pathCell.trim();
+
+      if(!paths.includes(currentPath))
+        paths.push(currentPath);
+
+      return;
+
+    }
+
+    const rawTitle =
+      (r[tIdx]||'').trim();
+
+    if(!rawTitle)
+      return;
+
+    let lastPlayed = null;
+    let playDates = [];
+
+    for(
+      let c = dateStart;
+      c < r.length;
+      c++
+    ){
+
+      const d =
+        parseLooseDate(r[c]);
+
+      if(d){
+
+        const iso =
+          dateToISO(d);
+
+        if(!playDates.includes(iso))
+          playDates.push(iso);
+
+        if(
+          lastPlayed === null ||
+          d > lastPlayed
+        ){
+
+          lastPlayed = d;
+
+        }
+
+      }
+
+    }
+
+    let duration = parseDuration(r[dIdx]);
+
+    if(duration === null){
+
+      for(let c = 0; c < r.length && c < dateStart; c++){
+
+        if(c === tIdx || c === dIdx) continue;
+
+        const alt = parseDuration(r[c]);
+
+        if(alt !== null){
+          duration = alt;
+          break;
+        }
+
+      }
+
+    }
+
+    episodes.push({
+
+      title:rawTitle,
+
+      duration,
+
+      lastPlayed:
+        lastPlayed
+          ? dateToISO(lastPlayed)
+          : null,
+
+      playDates,
+
+      sourcePath: currentPath,
+
+      dataRowIdx
+
+    });
+
+  });
+
+  show.episodes = episodes;
+
+  show.sourcePaths =
+    [...new Set(paths)];
+
+}
+
+/* ================= JSONP ================= */
+
+function jsonpFetch(
+  url,
+  callbackName
+){
+
+  return new Promise(
+    (resolve,reject)=>{
+
+      let done = false;
+
+      window[callbackName] =
+        function(response){
+
+          done = true;
+
+          resolve(response);
+
+          delete window[callbackName];
+
+          script.remove();
+
+        };
+
+      const script =
+        document.createElement('script');
+
+      script.src = url;
+
+      script.onerror = ()=>{
+
+        if(done)
+          return;
+
+        reject(
+          new Error('load-failed')
+        );
+
+        delete window[callbackName];
+
+        script.remove();
+
+      };
+
+      document.body.appendChild(script);
+
+      setTimeout(()=>{
+
+        if(!done){
+
+          reject(
+            new Error('timeout')
+          );
+
+          delete window[callbackName];
+
+          script.remove();
+
+        }
+
+      },12000);
+
+    }
+  );
+
+}
+
+async function fetchAutoShowRows(show){
+
+  const cbName =
+    'gvizCb_' +
+    Math.random()
+      .toString(36)
+      .slice(2);
+
+  const url =
+    `https://docs.google.com/spreadsheets/d/${state.spreadsheet.id}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(show.name)}`;
+
+  const response =
+    await jsonpFetch(
+      url,
+      cbName
+    );
+
+  if(
+    !response ||
+    response.status === 'error'
+  ){
+
+    const msg =
+      response &&
+      response.errors &&
+      response.errors[0]
+        ? response.errors[0].detailed_message
+        : 'Δεν βρέθηκε η καρτέλα';
+
+    throw new Error(msg);
+
+  }
+
+  const table =
+    response.table;
+
+  const rows = [];
+
+  const colLabels =
+    (table.cols||[])
+      .map(c=>c.label||'');
+
+  if(
+    colLabels.some(
+      l=>l && l.trim() !== ''
+    )
+  ){
+
+    rows.push(colLabels);
+
+  }
+
+  (table.rows||[]).forEach(r=>{
+
+    rows.push(
+      (r.c||[]).map(cell=>{
+
+        if(!cell)
+          return '';
+
+        if(
+          cell.f !== undefined &&
+          cell.f !== null
+        ){
+
+          return String(cell.f);
+
+        }
+
+        // Google's "timeofday" cell type returns v as [hours, minutes, seconds, ms]
+        // instead of a formatted string — build H:MM:SS directly from it.
+        if(Array.isArray(cell.v)){
+
+          const h = cell.v[0] || 0;
+          const m = cell.v[1] || 0;
+          const s = cell.v[2] || 0;
+
+          return (
+            String(h).padStart(2,'0') + ':' +
+            String(m).padStart(2,'0') + ':' +
+            String(s).padStart(2,'0')
+          );
+
+        }
+
+        if(
+          cell.v !== undefined &&
+          cell.v !== null
+        ){
+
+          return String(cell.v);
+
+        }
+
+        return '';
+
+      })
+    );
+
+  });
+
+  return rows;
+
+}
+
+/* ================= FETCH SHOW ================= */
+
+async function fetchShow(show){
+
+  show.status = 'loading';
+  show.error = null;
+
+  render();
+
+  try{
+
+    let rows;
+
+    if(show.source === 'auto'){
+
+      if(
+        !state.spreadsheet ||
+        !state.spreadsheet.id
+      ){
+
+        throw new Error(
+          'no-spreadsheet'
+        );
+
+      }
+
+      rows =
+        await fetchAutoShowRows(
+          show
+        );
+
+    }else{
+
+      const res =
+        await fetch(show.url);
+
+      if(!res.ok)
+        throw new Error(
+          'HTTP ' + res.status
+        );
+
+      const text =
+        await res.text();
+
+      rows =
+        parseCSV(text);
+
+    }
+
+    if(!rows.length)
+      throw new Error(
+        'Άδειο αρχείο'
+      );
+
+    show.rawRows = rows;
+
+    if(
+      show.titleCol === undefined ||
+      show.durCol === undefined
+    ){
+
+      const det =
+        detectColumns(rows[0]);
+
+      show.titleCol =
+        det.titleIdx;
+
+      show.durCol =
+        det.durIdx;
+
+      show.hasHeader =
+        det.hasHeader;
+
+      if(
+        show.dateStartCol === undefined
+      ){
+
+        show.dateStartCol = 3;
+
+      }
+
+    }
+
+    computeEpisodes(show);
+
+    show.status = 'ok';
+
+  }catch(e){
+
+    show.status = 'err';
+
+    show.error =
+      show.source === 'auto'
+        ? 'Δεν διαβάστηκε αυτή η καρτέλα («' +
+          show.name +
+          '»). Έλεγξε ότι το όνομα ταιριάζει ακριβώς με το tab και ότι το sheet είναι κοινόχρηστο.'
+        : 'Δεν διαβάστηκε το link. Βεβαιώσου ότι είναι δημοσιευμένο ως CSV και δημόσια προσβάσιμο.';
+
+  }
+
+  saveState();
+  render();
+
+}
+
+/* ================= GOOGLE SIGN-IN & WRITE-BACK ================= */
+
+function initGoogleAuth(){
+
+  const clientId = document.getElementById('oauth-client-id').value.trim();
+  const status = document.getElementById('google-auth-status');
+
+  if(!clientId){
+    alert('Βάλε πρώτα το OAuth Client ID.');
+    return;
+  }
+
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
+    status.textContent = 'Η βιβλιοθήκη Google δεν φορτώθηκε ακόμα — δοκίμασε ξανά σε λίγο, ή έλεγξε ότι το αρχείο τρέχει από πραγματική διεύθυνση (όχι file://).';
+    return;
+  }
+
+  if(state.spreadsheet){
+    state.spreadsheet.oauthClientId = clientId;
+    saveState();
+  }
+
+  status.textContent = 'Σύνδεση...';
+  googleAuthPending = true;
+
+  try{
+
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      callback: (response) => {
+        googleAuthPending = false;
+        if(response && response.access_token){
+          googleAccessToken = response.access_token;
+          status.textContent = 'Συνδέθηκες με Google — η εγγραφή πίσω στο sheet είναι ενεργή γι\' αυτή τη συνεδρία.';
+        } else {
+          status.textContent = 'Η σύνδεση απέτυχε ή ακυρώθηκε.';
+        }
+      },
+      error_callback: (err) => {
+        googleAuthPending = false;
+        status.textContent = 'Σφάλμα σύνδεσης: ' + (err && err.type ? err.type : 'άγνωστο') + '. Έλεγξε ότι το Authorized JavaScript origin στο Client ID ταιριάζει με τη διεύθυνση απ\' όπου τρέχει το αρχείο.';
+      }
+    });
+
+    googleTokenClient.requestAccessToken();
+
+  }catch(e){
+    googleAuthPending = false;
+    status.textContent = 'Σφάλμα: ' + e.message;
+  }
+
+}
+
+function formatDateForSheet(dateObjOrISO){
+  let d;
+  if(typeof dateObjOrISO === 'string'){
+    const [y,m,day] = dateObjOrISO.split('-').map(Number);
+    d = new Date(y, m-1, day);
+  } else {
+    d = dateObjOrISO;
+  }
+  return d.getDate() + '/' + (d.getMonth()+1);
+}
+
+async function writeBackPlayDate(slot, dateISO){
+
+  if(!googleAccessToken) return { ok:false, reason:'no-auth' };
+  if(!state.spreadsheet || !state.spreadsheet.id) return { ok:false, reason:'no-spreadsheet' };
+
+  const show = state.shows.find(s => s.id === slot.showId);
+  if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
+  if(slot.dataRowIdx === null || slot.dataRowIdx === undefined) return { ok:false, reason:'no-row' };
+
+  const rawRowIdx = (show.hasHeader ? 1 : 0) + slot.dataRowIdx;
+  const row = show.rawRows && show.rawRows[rawRowIdx];
+  if(!row) return { ok:false, reason:'row-missing' };
+
+  const dateStart = (show.dateStartCol !== undefined && show.dateStartCol !== null) ? show.dateStartCol : 3;
+
+  let targetCol = -1;
+  for(let c = dateStart; c < Math.max(row.length, dateStart + 1); c++){
+    if(!row[c] || String(row[c]).trim() === ''){
+      targetCol = c;
+      break;
+    }
+  }
+  if(targetCol === -1) targetCol = row.length;
+
+  const dateStr = formatDateForSheet(dateISO);
+  const colLetter = columnNumberToLetter(targetCol + 1);
+  const sheetRow = rawRowIdx + 1;
+  const safeSheetName = show.name.replace(/'/g, "''");
+  const range = `'${safeSheetName}'!${colLetter}${sheetRow}`;
+
+  try{
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + googleAccessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [[dateStr]] })
+    });
+
+    if(!res.ok){
+      const errData = await res.json().catch(()=>({}));
+      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+res.status) };
+    }
+
+    // keep local raw data + episode in sync for this session
+    while(row.length <= targetCol) row.push('');
+    row[targetCol] = dateStr;
+
+    computeEpisodes(show);
+    saveState();
+
+    return { ok:true };
+
+  }catch(e){
+    return { ok:false, reason: e.message };
+  }
+
+}
+
+/* ================= SYNC ================= */
+
+async function discoverAndSync(){
+
+  const url =
+    document.getElementById(
+      'ss-url'
+    ).value.trim();
+
+  const key =
+    document.getElementById(
+      'ss-key'
+    ).value.trim();
+
+  const status =
+    document.getElementById(
+      'sync-status'
+    );
+
+  if(!url){
+
+    alert(
+      'Βάλε το link του Google Sheet.'
+    );
+
+    return;
+
+  }
+
+  const id =
+    extractSpreadsheetId(url);
+
+  if(!id){
+
+    alert(
+      'Δεν αναγνωρίστηκε το link του Google Sheet.'
+    );
+
+    return;
+
+  }
+
+  if(!state.spreadsheet){
+
+    state.spreadsheet = {
+      tabNames:[]
+    };
+
+  }
+
+  state.spreadsheet.url = url;
+  state.spreadsheet.id = id;
+  state.spreadsheet.apiKey = key;
+
+  if(
+    !state.spreadsheet.tabNames
+  ){
+
+    state.spreadsheet.tabNames = [];
+
+  }
+
+  saveState();
+
+  let tabs =
+    state.spreadsheet.tabNames.slice();
+
+  if(key){
+
+    status.textContent =
+      'Ανίχνευση καρτελών με το API key...';
+
+    try{
+
+      const res =
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${id}?key=${encodeURIComponent(key)}&fields=sheets.properties`
+        );
+
+      const data =
+        await res.json()
+          .catch(()=>({}));
+
+      if(!res.ok){
+
+        const apiMsg =
+          data &&
+          data.error &&
+          data.error.message
+            ? data.error.message
+            : 'HTTP ' + res.status;
+
+        throw new Error(apiMsg);
+
+      }
+
+      const found =
+        (data.sheets||[])
+          .map(
+            s=>s.properties.title
+          );
+
+      found.forEach(name=>{
+
+        if(!tabs.includes(name))
+          tabs.push(name);
+
+      });
+
+      state.spreadsheet.tabNames =
+        tabs;
+
+      status.textContent =
+        'Βρέθηκαν ' +
+        found.length +
+        ' καρτέλες αυτόματα. Φόρτωση δεδομένων...';
+
+    }catch(e){
+
+      status.textContent =
+        'Το API key δεν δούλεψε (' +
+        e.message +
+        ') — συνεχίζω με τη λίστα ονομάτων που έχεις γράψει χειροκίνητα.';
+
+    }
+
+  }else if(!tabs.length){
+
+    status.textContent =
+      'Πρόσθεσε τουλάχιστον ένα όνομα καρτέλας ή ένα API key.';
+
+    saveState();
+    renderTabChips();
+
+    return;
+
+  }else{
+
+    status.textContent =
+      'Φόρτωση δεδομένων...';
+
+  }
+
+  tabs.forEach(name=>{
+
+    let show =
+      state.shows.find(
+        s =>
+          s.source === 'auto' &&
+          s.name === name
+      );
+
+    if(!show){
+
+      show = {
+
+        id:uid(),
+
+        name,
+
+        source:'auto',
+
+        status:'idle',
+
+        episodes:[],
+
+        dateStartCol:3
+
+      };
+
+      state.shows.push(show);
+
+    }
+
+  });
+
+  state.shows =
+    state.shows.filter(
+      s =>
+        s.source !== 'auto' ||
+        tabs.includes(s.name)
+    );
+
+  saveState();
+  renderShows();
+  renderTabChips();
+
+  for(
+    const show of
+    state.shows.filter(
+      s=>s.source === 'auto'
+    )
+  ){
+
+    await fetchShow(show);
+
+  }
+
+  status.textContent =
+    'Ενημερώθηκε στις ' +
+    new Date()
+      .toLocaleTimeString('el-GR');
+
+}
+
+/* ================= TIME ================= */
+
+function timeToMin(t){
+
+  const [
+    h,m
+  ] =
+    t.split(':')
+      .map(Number);
+
+  return h*60+m;
+
+}
+
+function minToTime(min){
+
+  min =
+    ((min%1440)+1440)%1440;
+
+  const h =
+    Math.floor(min/60);
+
+  const m =
+    min%60;
+
+  return (
+    String(h).padStart(2,'0') +
+    ':' +
+    String(m).padStart(2,'0')
+  );
+
+}
+
+function addDuration(
+  time,
+  duration
+){
+
+  duration =
+    duration || 0;
+
+  let total =
+    timeToMin(time)*60 +
+    duration;
+
+  total =
+    (
+      Math.round(total)%86400 +
+      86400
+    )%86400;
+
+  const h =
+    Math.floor(total/3600);
+
+  const m =
+    Math.floor(
+      (total%3600)/60
+    );
+
+  return (
+    String(h).padStart(2,'0') +
+    ':' +
+    String(m).padStart(2,'0')
+  );
+
+}
+
+/* ================= SHOW RENDER ================= */
+
+function renderShows(){
+
+  const list =
+    document.getElementById(
+      'shows-list'
+    );
+
+  if(!state.shows.length){
+
+    list.innerHTML = `
+      <div class="panel">
+        <p class="hint" style="margin:0;">
+          Δεν έχεις προσθέσει ακόμα καμία εκπομπή.
+        </p>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  list.innerHTML =
+    state.shows.map((show, showIdx)=>{
+
+      const statusTag =
+        show.status === 'ok'
+          ? `
+            <span class="status-tag ok">
+              ${show.episodes.length} επεισόδια
+            </span>
+            <span class="status-tag" style="${(show.sourcePaths&&show.sourcePaths.length)?'':'color:var(--live);border-color:var(--live);'}">
+              ${(show.sourcePaths&&show.sourcePaths.length) ? show.sourcePaths.length+' paths βρέθηκαν' : '0 paths βρέθηκαν'}
+            </span>
+          `
+          : show.status === 'err'
+            ? `
+              <span class="status-tag err">
+                Σφάλμα
+              </span>
+            `
+            : show.status === 'loading'
+              ? `
+                <span class="status-tag">
+                  Φόρτωση...
+                </span>
+              `
+              : `
+                <span class="status-tag">
+                  Μη φορτωμένο
+                </span>
+              `;
+
+      const episodesTable =
+        show.minimized
+          ? ''
+          : (
+              show.status === 'ok'
+                ? `
+                  <input
+                    type="text"
+                    placeholder="Αναζήτηση επεισοδίου σε ${escapeHtml(show.name)}..."
+                    class="ep-search"
+                    data-show="${show.id}"
+                    style="margin-top:12px;">
+
+                  <table class="episodes">
+
+                    <thead>
+
+                      <tr>
+                        <th>Τίτλος</th>
+                        <th style="width:100px;">
+                          Διάρκεια
+                        </th>
+                        <th style="width:160px;">
+                          Τελευταία προβολή
+                        </th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody
+                      id="ep-body-${show.id}">
+                    </tbody>
+
+                  </table>
+                `
+                : show.status === 'err'
+                  ? `
+                    <p
+                      style="color:var(--live);font-size:12.5px;margin:10px 0 0;">
+                      ${show.error}
+                    </p>
+                  `
+                  : ''
+            );
+
+      return `
+
+        <div
+          class="show-card"
+          data-id="${show.id}">
+
+          <div class="show-card-top">
+
+            <div>
+
+              <div class="show-name" style="display:flex;align-items:center;gap:8px;">
+                <input
+                  type="color"
+                  data-act="show-color"
+                  data-id="${show.id}"
+                  value="${show.color || '#e8a33d'}"
+                  title="Χρώμα εκπομπής"
+                  style="width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:3px;cursor:pointer;background:transparent;">
+                ${escapeHtml(show.name)}
+              </div>
+
+              <div class="show-meta">
+                ${statusTag}
+              </div>
+
+              <label
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:6px;
+                  color:var(--text-faint);
+                  font-size:11.5px;
+                  cursor:pointer;
+                  margin-top:6px;">
+                <input
+                  type="checkbox"
+                  data-act="toggle-show-path"
+                  data-id="${show.id}"
+                  ${show.showPath === false ? '' : 'checked'}
+                  style="width:auto;">
+                Εμφάνιση path αυτής της εκπομπής στο PDF/Word
+              </label>
+
+            </div>
+
+            <div class="show-actions">
+
+              <button
+                class="btn ghost small"
+                data-act="move-show-up"
+                data-id="${show.id}"
+                ${showIdx === 0 ? 'disabled' : ''}
+                title="Μετακίνηση πάνω">
+                &uarr;
+              </button>
+
+              <button
+                class="btn ghost small"
+                data-act="move-show-down"
+                data-id="${show.id}"
+                ${showIdx === state.shows.length - 1 ? 'disabled' : ''}
+                title="Μετακίνηση κάτω">
+                &darr;
+              </button>
+
+              <button
+                class="btn secondary small"
+                data-act="toggle-min"
+                data-id="${show.id}">
+                ${show.minimized
+                  ? 'Μεγέθυνση'
+                  : 'Ελαχιστοποίηση'}
+              </button>
+
+              <button
+                class="btn secondary small"
+                data-act="reload"
+                data-id="${show.id}">
+                Ανανέωση
+              </button>
+
+              <button
+                class="btn secondary small"
+                data-act="adv"
+                data-id="${show.id}">
+                Στήλες
+              </button>
+
+              <button
+                class="btn secondary small"
+                data-act="debug"
+                data-id="${show.id}">
+                Debug
+              </button>
+
+              <button
+                class="btn ghost"
+                data-act="remove"
+                data-id="${show.id}">
+                Διαγραφή
+              </button>
+
+            </div>
+
+          </div>
+
+          <div
+            class="adv"
+            id="adv-${show.id}">
+
+            <div class="row">
+
+              <div>
+
+                <label>
+                  Στήλη τίτλου
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  value="${(show.titleCol ?? 0)+1}"
+                  data-col="title"
+                  data-id="${show.id}">
+
+              </div>
+
+              <div>
+
+                <label>
+                  Στήλη διάρκειας
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  value="${(show.durCol ?? 1)+1}"
+                  data-col="dur"
+                  data-id="${show.id}">
+
+              </div>
+
+              <div>
+
+                <label>
+                  Από ποια στήλη ξεκινούν οι ημερομηνίες
+                </label>
+
+                <input
+                  type="text"
+                  value="${columnNumberToLetter((show.dateStartCol ?? 3)+1)}"
+                  data-col="datestart"
+                  data-id="${show.id}"
+                  placeholder="D">
+
+              </div>
+
+              <div>
+
+                <label>
+                  Πρώτη γραμμή = επικεφαλίδες
+                </label>
+
+                <select
+                  data-col="header"
+                  data-id="${show.id}">
+
+                  <option
+                    value="1"
+                    ${show.hasHeader ? 'selected' : ''}>
+                    Ναι
+                  </option>
+
+                  <option
+                    value="0"
+                    ${!show.hasHeader ? 'selected' : ''}>
+                    Όχι
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div style="align-self:end;">
+
+                <button
+                  class="btn small"
+                  data-act="recompute"
+                  data-id="${show.id}">
+                  Εφαρμογή
+                </button>
+
+              </div>
+
+            </div>
+
+            <div class="column-help">
+
+              Οι ημερομηνίες προβολής διαβάζονται
+              <strong>από αυτή τη στήλη και όλες τις επόμενες</strong>.
+
+              Για παράδειγμα, αν βάλεις
+              <strong>D</strong>,
+              διαβάζει D, E, F, G, H... μέχρι το τέλος.
+
+            </div>
+
+            <div class="column-preview">
+
+              Τίτλος:
+              ${columnNumberToLetter((show.titleCol ?? 0)+1)}
+
+              &nbsp; · &nbsp;
+
+              Διάρκεια:
+              ${columnNumberToLetter((show.durCol ?? 1)+1)}
+
+              &nbsp; · &nbsp;
+
+              Προβολές από:
+              ${columnNumberToLetter((show.dateStartCol ?? 3)+1)}
+
+            </div>
+
+          </div>
+
+          <div class="adv" id="debug-${show.id}"></div>
+
+          ${episodesTable}
+
+        </div>
+
+      `;
+
+    }).join('');
+
+  state.shows
+    .filter(
+      s=>s.status === 'ok'
+    )
+    .forEach(show=>{
+
+      const body =
+        document.getElementById(
+          'ep-body-'+show.id
+        );
+
+      if(body)
+        renderEpisodeRows(
+          body,
+          show.episodes
+        );
+
+    });
+
+}
+
+function formatAllPlayDates(e){
+  if(!e.playDates || !e.playDates.length) return '&mdash;';
+  const sorted = e.playDates.slice().sort();
+  if(sorted.length === 1) return formatISODateGreek(sorted[0]);
+  return sorted.map(d => formatISODateGreek(d)).join(', ');
+}
+
+function renderEpisodeRows(
+  tbody,
+  episodes
+){
+
+  tbody.innerHTML =
+    episodes.map(e=>`
+
+      <tr>
+
+        <td title="${escapeHtml(e.sourcePath||'')}">
+          ${escapeHtml(e.title)}
+        </td>
+
+        <td class="dur-pill">
+          ${
+            e.duration !== null
+              ? formatDuration(e.duration)
+              : '&mdash;'
+          }
+        </td>
+
+        <td style="color:var(--text-dim);">
+
+          ${formatAllPlayDates(e)}
+
+        </td>
+
+      </tr>
+
+    `).join('')
+
+    ||
+
+    `
+      <tr>
+        <td
+          colspan="3"
+          style="color:var(--text-faint);">
+          Καμία αντιστοιχία
+        </td>
+      </tr>
+    `;
+
+}
+
+function escapeHtml(s){
+
+  return String(s ?? '')
+    .replace(
+      /[&<>"']/g,
+      c=>({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[c])
+    );
+
+}
+
+/* ================= WEEK ================= */
+
+function getCurrentWeekDates(){
+
+  const now =
+    new Date();
+
+  let wd =
+    now.getDay();
+
+  wd =
+    (wd+6)%7;
+
+  const monday =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()-wd
+    );
+
+  const dates = [];
+
+  for(let i=0;i<8;i++){
+
+    dates.push(
+      new Date(
+        monday.getFullYear(),
+        monday.getMonth(),
+        monday.getDate()+i
+      )
+    );
+
+  }
+
+  return dates;
+
+}
+
+function renderWeek(){
+
+  const grid =
+    document.getElementById(
+      'week-grid'
+    );
+
+  const weekDates =
+    getCurrentWeekDates();
+
+  const nextMondayStr =
+    dateToISO(weekDates[7]);
+
+  const rangeLabel =
+    document.getElementById(
+      'week-range-label'
+    );
+
+  if(rangeLabel){
+
+    rangeLabel.textContent =
+      'Τρέχουσα εβδομάδα: ' +
+      weekDates[0]
+        .toLocaleDateString('el-GR') +
+      ' – ' +
+      weekDates[7]
+        .toLocaleDateString('el-GR') +
+      ' (επόμενη Δευτέρα)';
+
+  }
+
+  const weekCols =
+    DAYS.map((day,i)=>{
+
+      const slots =
+        (state.weekly[day]||[])
+          .slice()
+          .sort(
+            (a,b)=>
+              timeToMin(a.time) -
+              timeToMin(b.time)
+          );
+
+      const body =
+        slots.length
+          ? slots
+              .map(
+                s=>slotHtml(s)
+              )
+              .join('')
+          : `
+              <div class="empty-note">
+                Καμία ζώνη
+              </div>
+            `;
+
+      const dLabel =
+        weekDates[i].getDate() +
+        '/' +
+        (weekDates[i].getMonth()+1);
+
+      return `
+
+        <div class="day-col">
+
+          <div class="day-head">
+
+            <span class="name">
+
+              ${day}
+
+              <span
+                style="
+                  color:var(--text-dim);
+                  font-weight:400;
+                  font-size:12px;">
+                ${dLabel}
+              </span>
+
+            </span>
+
+            <button
+              class="btn ghost small"
+              data-act="copy-day"
+              data-day="${day}"
+              title="Αντιγραφή ημέρας"
+              style="font-size:16px;padding:4px 8px;">
+              &#10697;
+            </button>
+
+          </div>
+
+          <div class="day-body">
+
+            ${body}
+
+            <button
+              class="add-slot-btn"
+              data-act="add-week"
+              data-day="${day}">
+              + Προσθήκη ζώνης
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join('');
+
+  const nextMondaySlots =
+    ensureIndependentDay(nextMondayStr)
+      .slice()
+      .sort(
+        (a,b)=>
+          timeToMin(a.time) -
+          timeToMin(b.time)
+      );
+
+  const nextMondayBody =
+    nextMondaySlots.length
+      ? nextMondaySlots.map(s=>`
+
+          <div
+            class="slot"
+            data-act="edit-day-slot"
+            data-date="${nextMondayStr}"
+            data-slot="${s.id}"
+            style="position:relative;border-left-color:${getShowColor(s.showId)};">
+
+            <button
+              data-act="quick-delete-day"
+              data-date="${nextMondayStr}"
+              data-slot="${s.id}"
+              title="Διαγραφή"
+              style="
+                position:absolute;
+                top:3px;
+                right:3px;
+                background:transparent;
+                border:none;
+                color:var(--text-faint);
+                font-size:15px;
+                line-height:1;
+                cursor:pointer;
+                padding:2px 6px;">
+              &times;
+            </button>
+
+            <div class="t">
+              ${s.time}&ndash;${addDuration(s.time, s.duration||0)}
+            </div>
+
+            <div class="s">
+              ${escapeHtml(s.showName)}
+            </div>
+
+            <div class="e">
+              ${escapeHtml(s.episodeTitle)}
+            </div>
+
+          </div>
+
+        `).join('')
+      : `
+          <div class="empty-note">
+            Καμία ζώνη
+          </div>
+        `;
+
+  const nextMondayCol = `
+
+    <div class="day-col">
+
+      <div class="day-head">
+
+        <span class="name">
+
+          Δευτέρα (επόμ.)
+
+          <span
+            style="
+              color:var(--text-dim);
+              font-weight:400;
+              font-size:12px;">
+            ${weekDates[7].getDate()}/${weekDates[7].getMonth()+1}
+          </span>
+
+        </span>
+
+        <button
+          class="btn ghost small"
+          data-act="copy-date-day"
+          data-date="${nextMondayStr}"
+          title="Αντιγραφή ημέρας"
+          style="font-size:16px;padding:4px 8px;">
+          &#10697;
+        </button>
+
+      </div>
+
+      <div class="day-body">
+
+        ${nextMondayBody}
+
+        <button
+          class="add-slot-btn"
+          data-act="add-day-slot"
+          data-date="${nextMondayStr}">
+          + Προσθήκη ζώνης
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+  grid.innerHTML = weekCols + nextMondayCol;
+
+}
+
+function getShowColor(showId){
+  const show = state.shows.find(s => s.id === showId);
+  return (show && show.color) || '#e8a33d';
+}
+
+function slotHtml(s){
+
+  const end =
+    addDuration(
+      s.time,
+      s.duration || 0
+    );
+
+  return `
+
+    <div
+      class="slot"
+      data-act="edit-slot"
+      data-slot="${s.id}"
+      style="position:relative;border-left-color:${getShowColor(s.showId)};">
+
+      <button
+        data-act="quick-delete-week"
+        data-slot="${s.id}"
+        title="Διαγραφή"
+        style="
+          position:absolute;
+          top:3px;
+          right:3px;
+          background:transparent;
+          border:none;
+          color:var(--text-faint);
+          font-size:15px;
+          line-height:1;
+          cursor:pointer;
+          padding:2px 6px;">
+        &times;
+      </button>
+
+      <div class="t">
+        ${s.time}&ndash;${end}
+      </div>
+
+      <div class="s">
+        ${escapeHtml(s.showName)}
+      </div>
+
+      <div class="e">
+        ${escapeHtml(s.episodeTitle)}
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+/* ================= MONTH ================= */
+
+function monthKey(y,m){
+
+  return (
+    y +
+    '-' +
+    String(m+1).padStart(2,'0')
+  );
+
+}
+
+let dateWeekStart = null;
+
+function addDaysToDate(
+  dateStr,
+  n
+){
+
+  const [
+    y,m,d
+  ] =
+    dateStr
+      .split('-')
+      .map(Number);
+
+  const dt =
+    new Date(
+      y,
+      m-1,
+      d+n
+    );
+
+  return (
+    dt.getFullYear() +
+    '-' +
+    String(
+      dt.getMonth()+1
+    ).padStart(2,'0') +
+    '-' +
+    String(
+      dt.getDate()
+    ).padStart(2,'0')
+  );
+
+}
+
+function mondayOfDate(
+  dateStr
+){
+
+  const [
+    y,m,d
+  ] =
+    dateStr
+      .split('-')
+      .map(Number);
+
+  const dObj =
+    new Date(
+      y,
+      m-1,
+      d
+    );
+
+  let wd =
+    dObj.getDay();
+
+  wd =
+    (wd+6)%7;
+
+  return addDaysToDate(
+    dateStr,
+    -wd
+  );
+
+}
+
+function ensureMonthEntry(){
+
+  const key =
+    monthKey(
+      state.currentMonth.year,
+      state.currentMonth.month
+    );
+
+  if(!state.monthly[key]){
+
+    state.monthly[key] = {
+      overrides:{}
+    };
+
+  }
+
+  return state.monthly[key];
+
+}
+
+function ensureMonthEntryForDate(
+  dateStr
+){
+
+  const [
+    y,m
+  ] =
+    dateStr
+      .split('-')
+      .map(Number);
+
+  const key =
+    monthKey(
+      y,
+      m-1
+    );
+
+  if(!state.monthly[key]){
+
+    state.monthly[key] = {
+      overrides:{}
+    };
+
+  }
+
+  return state.monthly[key];
+
+}
+
+function generateMonthFromTemplate(){
+
+  const entry =
+    ensureMonthEntry();
+
+  entry.overrides = {};
+
+  saveState();
+
+  renderMonth();
+
+}
+
+function daysInMonth(y,m){
+
+  return new Date(
+    y,
+    m+1,
+    0
+  ).getDate();
+
+}
+
+function weekdayNameFromDate(
+  dateStr
+){
+
+  const [
+    y,m,d
+  ] =
+    dateStr
+      .split('-')
+      .map(Number);
+
+  let wd =
+    new Date(
+      y,
+      m-1,
+      d
+    ).getDay();
+
+  wd =
+    (wd+6)%7;
+
+  return DAYS[wd];
+
+}
+
+function ensureIndependentDay(dateStr){
+
+  const entry = ensureMonthEntryForDate(dateStr);
+
+  if(!entry.overrides[dateStr]){
+
+    entry.overrides[dateStr] = [];
+
+    saveState();
+
+  }
+
+  return entry.overrides[dateStr];
+
+}
+
+function getEffectiveDaySlots(
+  dateStr
+){
+
+  const entry =
+    ensureMonthEntryForDate(
+      dateStr
+    );
+
+  if(
+    entry.overrides &&
+    entry.overrides[dateStr]
+  ){
+
+    return entry.overrides[dateStr];
+
+  }
+
+  const wd =
+    weekdayNameFromDate(
+      dateStr
+    );
+
+  return (
+    state.weekly[wd] || []
+  );
+
+}
+
+function renderMonth(){
+
+  const {
+    year,
+    month
+  } =
+    state.currentMonth;
+
+  document.getElementById(
+    'month-label'
+  ).textContent =
+    new Date(
+      year,
+      month,
+      1
+    ).toLocaleDateString(
+      'el-GR',
+      {
+        month:'long',
+        year:'numeric'
+      }
+    );
+
+  if(dateWeekStart){
+
+    renderDateWeekGrid();
+
+    return;
+
+  }
+
+  const entry =
+    ensureMonthEntry();
+
+  const total =
+    daysInMonth(
+      year,
+      month
+    );
+
+  let html = '';
+
+  for(
+    let d=1;
+    d<=total;
+    d++
+  ){
+
+    const dateObj =
+      new Date(
+        year,
+        month,
+        d
+      );
+
+    let wd =
+      dateObj.getDay();
+
+    wd =
+      (wd+6)%7;
+
+    const dayName =
+      DAYS[wd];
+
+    const dateStr =
+      year +
+      '-' +
+      String(month+1)
+        .padStart(2,'0') +
+      '-' +
+      String(d)
+        .padStart(2,'0');
+
+    const isOverride =
+      !!entry.overrides[dateStr];
+
+    const slots =
+      (
+        isOverride
+          ? entry.overrides[dateStr]
+          : (
+              state.weekly[dayName] ||
+              []
+            )
+      )
+      .slice()
+      .sort(
+        (a,b)=>
+          timeToMin(a.time) -
+          timeToMin(b.time)
+      );
+
+    html += `
+
+      <div
+        class="day-block ${isOverride?'override':''}"
+        data-date="${dateStr}">
+
+        <div
+          class="day-block-head"
+          data-act="toggle-day"
+          data-date="${dateStr}">
+
+          <div class="dinfo">
+
+            <span class="wd">
+              ${dayName} ${d}
+            </span>
+
+            <span class="dt">
+              ${dateObj.toLocaleDateString('el-GR')}
+            </span>
+
+          </div>
+
+          <span class="count">
+            ${slots.length} ζώνες
+            ${isOverride
+              ? '· τροποποιημένη'
+              : ''}
+          </span>
+
+          <button
+            class="btn ghost small"
+            data-act="date-week"
+            data-date="${dateStr}">
+            7 μέρες &rarr;
+          </button>
+
+        </div>
+
+        <div
+          class="day-block-body"
+          id="db-${dateStr}">
+
+          ${
+            slots.map(s=>`
+
+              <div
+                class="mini-slot"
+                data-act="edit-day-slot"
+                data-date="${dateStr}"
+                data-slot="${s.id}"
+                style="border-left:3px solid ${getShowColor(s.showId)};padding-left:8px;">
+
+                <div class="t">
+                  ${s.time}&ndash;
+                  ${addDuration(
+                    s.time,
+                    s.duration||0
+                  )}
+                </div>
+
+                <div class="info">
+
+                  ${escapeHtml(
+                    s.episodeTitle
+                  )}
+
+                  <div class="s">
+                    ${escapeHtml(
+                      s.showName
+                    )}
+                  </div>
+
+                </div>
+
+                <button
+                  data-act="quick-delete-day"
+                  data-date="${dateStr}"
+                  data-slot="${s.id}"
+                  title="Διαγραφή"
+                  style="
+                    background:transparent;
+                    border:none;
+                    color:var(--text-faint);
+                    font-size:15px;
+                    cursor:pointer;
+                    padding:2px 6px;">
+                  &times;
+                </button>
+
+              </div>
+
+            `).join('')
+
+            ||
+
+            `
+              <p
+                class="hint"
+                style="margin:8px 0;">
+                Καμία ζώνη αυτή τη μέρα.
+              </p>
+            `
+          }
+
+          <div
+            style="
+              margin-top:8px;
+              display:flex;
+              gap:8px;
+              flex-wrap:wrap;">
+
+            <button
+              class="btn small secondary"
+              data-act="add-day-slot"
+              data-date="${dateStr}">
+              + Ζώνη για αυτή τη μέρα
+            </button>
+
+            ${
+              isOverride
+                ? `
+                  <button
+                    class="btn small ghost"
+                    data-act="reset-day"
+                    data-date="${dateStr}">
+                    Επαναφορά στο πρότυπο
+                  </button>
+                `
+                : ''
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  document.getElementById(
+    'month-list'
+  ).innerHTML = html;
+
+}
+
+/* ================= DATE WEEK VIEW ================= */
+
+function renderDateWeekGrid(){
+
+  const [
+    sy,sm,sd
+  ] =
+    dateWeekStart
+      .split('-')
+      .map(Number);
+
+  const startLabel =
+    new Date(
+      sy,
+      sm-1,
+      sd
+    ).toLocaleDateString(
+      'el-GR',
+      {
+        day:'numeric',
+        month:'long',
+        year:'numeric'
+      }
+    );
+
+  let html = `
+
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        margin-bottom:14px;
+        flex-wrap:wrap;">
+
+      <button
+        class="btn secondary small"
+        data-act="date-week-back">
+        &larr; Πίσω στον μήνα
+      </button>
+
+      <span
+        style="
+          color:var(--text-dim);
+          font-size:13px;">
+        Πρόγραμμα 7 ημερών από
+        ${startLabel}
+      </span>
+
+    </div>
+
+    <div class="week-grid" style="grid-template-columns:repeat(7,1fr);">
+  `;
+
+  for(let i=0;i<7;i++){
+
+    const dateStr =
+      addDaysToDate(
+        dateWeekStart,
+        i
+      );
+
+    const [
+      y,m,d
+    ] =
+      dateStr
+        .split('-')
+        .map(Number);
+
+    const dObj =
+      new Date(
+        y,
+        m-1,
+        d
+      );
+
+    let wd =
+      dObj.getDay();
+
+    wd =
+      (wd+6)%7;
+
+    const label =
+      DAYS_SHORT[wd] +
+      ' ' +
+      d +
+      '/' +
+      m;
+
+    const slots =
+      getEffectiveDaySlots(
+        dateStr
+      )
+      .slice()
+      .sort(
+        (a,b)=>
+          timeToMin(a.time) -
+          timeToMin(b.time)
+      );
+
+    const body =
+      slots.length
+        ? slots.map(s=>`
+
+            <div
+              class="slot"
+              data-act="edit-day-slot"
+              data-date="${dateStr}"
+              data-slot="${s.id}"
+              style="position:relative;border-left-color:${getShowColor(s.showId)};">
+
+              <button
+                data-act="quick-delete-day"
+                data-date="${dateStr}"
+                data-slot="${s.id}"
+                title="Διαγραφή"
+                style="
+                  position:absolute;
+                  top:3px;
+                  right:3px;
+                  background:transparent;
+                  border:none;
+                  color:var(--text-faint);
+                  font-size:15px;
+                  cursor:pointer;
+                  padding:2px 6px;">
+                &times;
+              </button>
+
+              <div class="t">
+                ${s.time}&ndash;
+                ${addDuration(
+                  s.time,
+                  s.duration||0
+                )}
+              </div>
+
+              <div class="s">
+                ${escapeHtml(s.showName)}
+              </div>
+
+              <div class="e">
+                ${escapeHtml(s.episodeTitle)}
+              </div>
+
+            </div>
+
+          `).join('')
+
+        : `
+          <div class="empty-note">
+            Καμία ζώνη
+          </div>
+        `;
+
+    html += `
+
+      <div class="day-col">
+
+        <div class="day-head">
+
+          <span class="name">
+            ${label}
+          </span>
+
+        </div>
+
+        <div class="day-body">
+
+          ${body}
+
+          <button
+            class="add-slot-btn"
+            data-act="add-day-slot"
+            data-date="${dateStr}">
+            + Προσθήκη ζώνης
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  html += `
+    </div>
+  `;
+
+  document.getElementById(
+    'month-list'
+  ).innerHTML = html;
+
+}
+
+/* ================= EDITOR ================= */
+
+function suggestNextTime(ctx){
+
+  let arr;
+
+  if(ctx.mode === 'week'){
+
+    arr =
+      state.weekly[ctx.day] ||
+      [];
+
+  }else{
+
+    arr =
+      getEffectiveDaySlots(
+        ctx.date
+      ) || [];
+
+  }
+
+  if(!arr.length)
+    return '08:00';
+
+  let maxEndSec = null;
+
+  arr.forEach(s=>{
+
+    const endSec =
+      timeToMin(s.time)*60 +
+      (s.duration || 0);
+
+    if(
+      maxEndSec === null ||
+      endSec > maxEndSec
+    ){
+
+      maxEndSec = endSec;
+
+    }
+
+  });
+
+  return minToTime(
+    Math.ceil(
+      maxEndSec/60
+    )
+  );
+
+}
+
+let editorCtx = null;
+let episodeSort = 'default';
+
+function sortEpisodes(eps, mode){
+  const arr = eps.slice();
+  if(mode === 'title-asc'){
+    arr.sort((a,b) => a.title.localeCompare(b.title, 'el'));
+  } else if(mode === 'title-desc'){
+    arr.sort((a,b) => b.title.localeCompare(a.title, 'el'));
+  } else if(mode === 'played-recent'){
+    arr.sort((a,b) => (b.lastPlayed||'').localeCompare(a.lastPlayed||''));
+  } else if(mode === 'played-oldest'){
+    arr.sort((a,b) => {
+      if(!a.lastPlayed && !b.lastPlayed) return 0;
+      if(!a.lastPlayed) return -1;
+      if(!b.lastPlayed) return 1;
+      return a.lastPlayed.localeCompare(b.lastPlayed);
+    });
+  } else if(mode === 'duration-asc'){
+    arr.sort((a,b) => (a.duration ?? Infinity) - (b.duration ?? Infinity));
+  } else if(mode === 'duration-desc'){
+    arr.sort((a,b) => (b.duration ?? -1) - (a.duration ?? -1));
+  }
+  return arr;
+}
+
+function openEditor(ctx){
+
+  editorCtx = ctx;
+
+  episodeSort = 'default';
+
+  const sortSel = document.getElementById('sp-sort');
+  if(sortSel) sortSel.value = 'default';
+
+  const list =
+    state.shows.filter(
+      s=>s.status === 'ok'
+    );
+
+  const showSel =
+    document.getElementById(
+      'sp-show'
+    );
+
+  showSel.innerHTML =
+    `<option value="">
+      — επίλεξε —
+    </option>` +
+
+    list.map(
+      s=>`
+        <option value="${s.id}">
+          ${escapeHtml(s.name)}
+        </option>
+      `
+    ).join('');
+
+  document.getElementById(
+    'sp-search'
+  ).value = '';
+
+  document.getElementById(
+    'sp-episodes'
+  ).innerHTML = '';
+
+  document.getElementById(
+    'sp-calc'
+  ).textContent =
+    'Επίλεξε επεισόδιο για να δεις την ώρα λήξης.';
+
+  document.getElementById(
+    'sp-delete'
+  ).style.display =
+    ctx.slotId
+      ? 'inline-block'
+      : 'none';
+
+  let existing = null;
+
+  if(ctx.slotId){
+
+    const arr =
+      ctx.mode === 'week'
+        ? state.weekly[ctx.day]
+        : getEffectiveDaySlots(
+            ctx.date
+          );
+
+    existing =
+      arr.find(
+        s=>s.id === ctx.slotId
+      );
+
+  }
+
+  document.getElementById(
+    'sp-title'
+  ).textContent =
+    ctx.slotId
+      ? 'Επεξεργασία ζώνης'
+      : 'Νέα ζώνη';
+
+  document.getElementById(
+    'sp-time'
+  ).value =
+    existing
+      ? existing.time
+      : suggestNextTime(ctx);
+
+  editorCtx.selected =
+    existing
+      ? {
+          showId:existing.showId,
+          showName:existing.showName,
+          episodeTitle:existing.episodeTitle,
+          duration:existing.duration,
+          sourcePath:existing.sourcePath || null,
+          dataRowIdx:existing.dataRowIdx ?? null
+        }
+      : null;
+
+  if(existing){
+
+    showSel.value =
+      existing.showId;
+
+    renderEpisodePicker(
+      existing.showId
+    );
+
+    updateCalc();
+
+  }
+
+  document.getElementById(
+    'overlay'
+  ).classList.add('open');
+
+}
+
+function closeEditor(){
+
+  document.getElementById(
+    'overlay'
+  ).classList.remove('open');
+
+  editorCtx = null;
+
+}
+
+function renderEpisodePicker(
+  showId,
+  filter
+){
+
+  const show =
+    state.shows.find(
+      s=>s.id === showId
+    );
+
+  const box =
+    document.getElementById(
+      'sp-episodes'
+    );
+
+  if(!show){
+
+    box.innerHTML = '';
+
+    return;
+
+  }
+
+  filter =
+    (filter||'').toLowerCase();
+
+  let eps =
+    show.episodes;
+
+  if(filter){
+
+    eps =
+      eps.filter(
+        e =>
+          e.title
+            .toLowerCase()
+            .includes(filter)
+      );
+
+  }
+
+  eps = sortEpisodes(eps, episodeSort);
+
+  eps =
+    eps.slice(0,150);
+
+  box.innerHTML =
+    eps.map(e=>{
+
+      const sel =
+        editorCtx.selected &&
+        editorCtx.selected.episodeTitle === e.title;
+
+      const lastPlayedLabel =
+        (e.playDates && e.playDates.length)
+          ? `
+            <span
+              style="
+                display:inline-block;
+                background:var(--accent-soft);
+                color:var(--accent);
+                font-size:11.5px;
+                font-weight:600;
+                padding:2px 9px;
+                border-radius:10px;">
+              Έπαιξε: ${formatAllPlayDates(e)}
+            </span>
+          `
+          : `
+            <span
+              style="
+                font-size:11.5px;
+                color:var(--text-faint);">
+              Δεν έχει παίξει ακόμα
+            </span>
+          `;
+
+      return `
+
+        <div
+          class="episode-opt ${sel?'sel':''}"
+          data-title="${escapeHtml(e.title)}"
+          data-dur="${e.duration ?? ''}"
+          data-path="${escapeHtml(e.sourcePath || '')}"
+          data-rowidx="${e.dataRowIdx ?? ''}"
+          style="
+            flex-direction:column;
+            align-items:stretch;
+            gap:4px;">
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              gap:8px;">
+
+            <span>
+              ${escapeHtml(e.title)}
+            </span>
+
+            <span class="d">
+              ${
+                e.duration !== null
+                  ? formatDuration(
+                      e.duration
+                    )
+                  : ''
+              }
+            </span>
+
+          </div>
+
+          <div>
+            ${lastPlayedLabel}
+          </div>
+
+        </div>
+
+      `;
+
+    }).join('')
+
+    ||
+
+    `
+      <div
+        class="episode-opt"
+        style="color:var(--text-faint);">
+        Καμία αντιστοιχία
+      </div>
+    `;
+
+}
+
+function updateCalc(){
+
+  const time =
+    document.getElementById(
+      'sp-time'
+    ).value;
+
+  const calc =
+    document.getElementById(
+      'sp-calc'
+    );
+
+  if(
+    editorCtx.selected &&
+    editorCtx.selected.duration !== null &&
+    editorCtx.selected.duration !== undefined
+  ){
+
+    calc.innerHTML = `
+
+      Έναρξη
+      <b>${time}</b>
+
+      &nbsp;+&nbsp;
+
+      ${formatDuration(
+        editorCtx.selected.duration
+      )}
+
+      &nbsp;=&nbsp;
+
+      Λήξη
+      <b>
+        ${addDuration(
+          time,
+          editorCtx.selected.duration
+        )}
+      </b>
+
+    `;
+
+  }else if(editorCtx.selected){
+
+    calc.textContent =
+      'Άγνωστη διάρκεια για αυτό το επεισόδιο — έλεγξε τη στήλη διάρκειας στο sheet.';
+
+  }else{
+
+    calc.textContent =
+      'Επίλεξε επεισόδιο για να δεις την ώρα λήξης.';
+
+  }
+
+}
+
+/* ================= COPY ================= */
+
+let copyFromDay = null;
+let copyFromDate = null;
+
+function openCopyPanel(day){
+
+  copyFromDay = day;
+  copyFromDate = null;
+
+  document.getElementById(
+    'copy-from-label'
+  ).textContent =
+    `Αντίγραφο των ωρών από «${day}» σε:`;
+
+  document.getElementById(
+    'copy-days-list'
+  ).innerHTML =
+    DAYS
+      .filter(
+        d=>d!==day
+      )
+      .map(
+        d=>`
+
+          <label
+            style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+              font-size:13.5px;
+              color:var(--text);
+              cursor:pointer;">
+
+            <input
+              type="checkbox"
+              value="${d}"
+              style="width:auto;">
+
+            ${d}
+
+          </label>
+
+        `
+      ).join('');
+
+  document.getElementById(
+    'copy-overlay'
+  ).classList.add('open');
+
+}
+
+function openCopyPanelForDate(dateStr, label){
+
+  copyFromDay = null;
+  copyFromDate = dateStr;
+
+  document.getElementById(
+    'copy-from-label'
+  ).textContent =
+    `Αντίγραφο των ωρών από «${label}» στο πρότυπο, στις μέρες:`;
+
+  document.getElementById(
+    'copy-days-list'
+  ).innerHTML =
+    DAYS
+      .map(
+        d=>`
+
+          <label
+            style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+              font-size:13.5px;
+              color:var(--text);
+              cursor:pointer;">
+
+            <input
+              type="checkbox"
+              value="${d}"
+              style="width:auto;">
+
+            ${d}
+
+          </label>
+
+        `
+      ).join('');
+
+  document.getElementById(
+    'copy-overlay'
+  ).classList.add('open');
+
+}
+
+function closeCopyPanel(){
+
+  document.getElementById(
+    'copy-overlay'
+  ).classList.remove('open');
+
+  copyFromDay = null;
+  copyFromDate = null;
+
+}
+
+/* ================= TAB NAMES ================= */
+
+function addTabName(){
+
+  const input =
+    document.getElementById(
+      'tab-name-input'
+    );
+
+  const name =
+    input.value.trim();
+
+  if(!name)
+    return;
+
+  if(!state.spreadsheet){
+
+    state.spreadsheet = {
+      tabNames:[]
+    };
+
+  }
+
+  if(
+    !state.spreadsheet.tabNames
+  ){
+
+    state.spreadsheet.tabNames = [];
+
+  }
+
+  if(
+    !state.spreadsheet.tabNames.includes(
+      name
+    )
+  ){
+
+    state.spreadsheet.tabNames.push(
+      name
+    );
+
+  }
+
+  input.value = '';
+
+  saveState();
+  renderTabChips();
+
+}
+
+document.addEventListener(
+  'keydown',
+  e=>{
+
+    if(
+      e.target.id === 'tab-name-input' &&
+      e.key === 'Enter'
+    ){
+
+      e.preventDefault();
+
+      addTabName();
+
+    }
+
+  }
+);
+
+/* ================= EVENTS ================= */
+
+document.addEventListener(
+  'click',
+  async e=>{
+
+    const t =
+      e.target;
+
+    /* tabs */
+
+    if(
+      t.matches(
+        'nav.tabs button'
+      )
+    ){
+
+      document
+        .querySelectorAll(
+          'nav.tabs button'
+        )
+        .forEach(
+          b=>b.classList.remove(
+            'active'
+          )
+        );
+
+      t.classList.add('active');
+
+      [
+        'shows',
+        'week',
+        'month'
+      ].forEach(id=>{
+
+        document
+          .getElementById(
+            'tab-'+id
+          )
+          .classList.toggle(
+            'hidden',
+            id !== t.dataset.tab
+          );
+
+      });
+
+      return;
+
+    }
+
+    /* add show */
+
+    if(
+      t.id === 'add-show-btn'
+    ){
+
+      const name =
+        document.getElementById(
+          'new-show-name'
+        ).value.trim();
+
+      const url =
+        document.getElementById(
+          'new-show-url'
+        ).value.trim();
+
+      if(!name || !url)
+        return;
+
+      const show = {
+
+        id:uid(),
+
+        name,
+
+        url,
+
+        source:'manual',
+
+        status:'idle',
+
+        episodes:[],
+
+        dateStartCol:3
+
+      };
+
+      state.shows.push(show);
+
+      document.getElementById(
+        'new-show-name'
+      ).value = '';
+
+      document.getElementById(
+        'new-show-url'
+      ).value = '';
+
+      saveState();
+      renderShows();
+
+      fetchShow(show);
+
+      return;
+
+    }
+
+    const actEl =
+      t.closest(
+        '[data-act]'
+      );
+
+    if(actEl && actEl.dataset.act){
+
+      const act =
+        actEl.dataset.act;
+
+      if(act === 'reload'){
+
+        const show =
+          state.shows.find(
+            s =>
+              s.id === actEl.dataset.id
+          );
+
+        if(show)
+          fetchShow(show);
+
+      }
+
+      else if(
+        act === 'toggle-min'
+      ){
+
+        const show =
+          state.shows.find(
+            s =>
+              s.id === actEl.dataset.id
+          );
+
+        if(show){
+
+          show.minimized =
+            !show.minimized;
+
+          saveState();
+          renderShows();
+
+        }
+
+      }
+
+      else if(
+        act === 'toggle-show-path'
+      ){
+
+        const show =
+          state.shows.find(
+            s =>
+              s.id === actEl.dataset.id
+          );
+
+        if(show){
+
+          show.showPath = actEl.checked;
+
+          saveState();
+
+        }
+
+      }
+
+      else if(
+        act === 'move-show-up' ||
+        act === 'move-show-down'
+      ){
+
+        const idx =
+          state.shows.findIndex(
+            s => s.id === actEl.dataset.id
+          );
+
+        const dir = act === 'move-show-up' ? -1 : 1;
+        const targetIdx = idx + dir;
+
+        if(idx >= 0 && targetIdx >= 0 && targetIdx < state.shows.length){
+
+          const tmp = state.shows[idx];
+          state.shows[idx] = state.shows[targetIdx];
+          state.shows[targetIdx] = tmp;
+
+          saveState();
+          renderShows();
+
+        }
+
+      }
+
+      else if(act === 'remove'){
+
+        state.shows =
+          state.shows.filter(
+            s =>
+              s.id !== actEl.dataset.id
+          );
+
+        saveState();
+        renderShows();
+
+      }
+
+      else if(act === 'adv'){
+
+        document
+          .getElementById(
+            'adv-'+actEl.dataset.id
+          )
+          .classList.toggle(
+            'open'
+          );
+
+      }
+
+      else if(act === 'debug'){
+
+        const show =
+          state.shows.find(
+            s => s.id === actEl.dataset.id
+          );
+
+        const box =
+          document.getElementById('debug-'+actEl.dataset.id);
+
+        if(box.classList.contains('open')){
+          box.classList.remove('open');
+        } else {
+
+          if(!show || !show.rawRows){
+            box.innerHTML = '<p class="hint" style="margin:8px 0;">Δεν υπάρχουν ακόμα δεδομένα — πάτα πρώτα "Ανανέωση".</p>';
+          } else {
+
+            const rows = show.hasHeader ? show.rawRows.slice(1) : show.rawRows;
+            const tIdx = show.titleCol ?? 0;
+            const dIdx = show.durCol ?? 1;
+
+            const maxCols = rows.reduce((m,r) => Math.max(m, r.length), 0);
+            const colCount = Math.min(maxCols, 12);
+
+            let html = `
+              <input type="text" class="debug-search" data-id="${show.id}" placeholder="Φίλτρο τίτλου... (π.χ. XOROS SYLLOGOY)" style="margin-bottom:8px;">
+              <p class="hint" style="margin:0 0 8px;">Στήλη τίτλου: <b>${columnNumberToLetter(tIdx+1)}</b> &middot; Στήλη διάρκειας: <b>${columnNumberToLetter(dIdx+1)}</b> (τονισμένη παρακάτω)</p>
+              <div style="max-height:460px;overflow-y:auto;border:1px solid var(--border);border-radius:3px;">
+              <table class="episodes"><thead><tr>
+              <th>#</th>`;
+
+            for(let c=0; c<colCount; c++){
+              html += `<th style="${c===dIdx?'color:var(--accent);':''}">${columnNumberToLetter(c+1)}</th>`;
+            }
+
+            html += `<th>Διάρκεια αναγνωρίστηκε</th></tr></thead><tbody>`;
+
+            rows.forEach((r, i) => {
+              const rawTitle = r[tIdx];
+              const parsed = parseDuration(r[dIdx]);
+              const searchKey = escapeHtml(String(rawTitle||'').toLowerCase());
+              html += `<tr data-search="${searchKey}"><td>${i+1}</td>`;
+              for(let c=0; c<colCount; c++){
+                const val = r[c];
+                html += `<td style="font-family:monospace;font-size:10.5px;${c===dIdx?'background:var(--accent-soft);':''}">${escapeHtml(JSON.stringify(val === undefined ? null : val))}</td>`;
+              }
+              html += `<td style="color:${parsed!==null?'var(--accent-2)':'var(--live)'};">${parsed!==null ? formatDuration(parsed) : 'ΔΕΝ ΑΝΑΓΝΩΡΙΣΤΗΚΕ'}</td></tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            box.innerHTML = html;
+
+          }
+
+          box.classList.add('open');
+
+        }
+
+      }
+
+      else if(
+        act === 'recompute'
+      ){
+
+        const show =
+          state.shows.find(
+            s =>
+              s.id === actEl.dataset.id
+          );
+
+        const card =
+          actEl.closest(
+            '.show-card'
+          );
+
+        const titleCol =
+          +card.querySelector(
+            '[data-col="title"]'
+          ).value - 1;
+
+        const durCol =
+          +card.querySelector(
+            '[data-col="dur"]'
+          ).value - 1;
+
+        const dateStartInput =
+          card.querySelector(
+            '[data-col="datestart"]'
+          ).value.trim();
+
+        let dateStartCol;
+
+        if(
+          /^\d+$/.test(
+            dateStartInput
+          )
+        ){
+
+          dateStartCol =
+            Math.max(
+              0,
+              +dateStartInput-1
+            );
+
+        }else{
+
+          dateStartCol =
+            columnLetterToNumber(
+              dateStartInput
+            );
+
+          if(
+            dateStartCol === null
+          ){
+
+            alert(
+              'Η στήλη ημερομηνιών πρέπει να είναι π.χ. D ή 4.'
+            );
+
+            return;
+
+          }
+
+          dateStartCol--;
+
+        }
+
+        const hasHeader =
+          card.querySelector(
+            '[data-col="header"]'
+          ).value === '1';
+
+        show.titleCol =
+          titleCol;
+
+        show.durCol =
+          durCol;
+
+        show.dateStartCol =
+          dateStartCol;
+
+        show.hasHeader =
+          hasHeader;
+
+        computeEpisodes(show);
+
+        saveState();
+        renderShows();
+
+      }
+
+      else if(
+        act === 'add-week'
+      ){
+
+        openEditor({
+          mode:'week',
+          day:actEl.dataset.day,
+          slotId:null
+        });
+
+      }
+
+      else if(
+        act === 'copy-day'
+      ){
+
+        openCopyPanel(
+          actEl.dataset.day
+        );
+
+      }
+
+      else if(
+        act === 'copy-date-day'
+      ){
+
+        openCopyPanelForDate(
+          actEl.dataset.date,
+          'Δευτέρα (επόμ.)'
+        );
+
+      }
+
+      else if(
+        act === 'remove-tab-name'
+      ){
+
+        if(
+          state.spreadsheet &&
+          state.spreadsheet.tabNames
+        ){
+
+          state.spreadsheet.tabNames =
+            state.spreadsheet.tabNames.filter(
+              n =>
+                n !== actEl.dataset.name
+            );
+
+          saveState();
+          renderTabChips();
+
+        }
+
+      }
+
+      else if(
+        act === 'edit-slot'
+      ){
+
+        const dayCol =
+          actEl.closest(
+            '.day-col'
+          );
+
+        const day =
+          DAYS.find(
+            d =>
+              dayCol &&
+              dayCol.querySelector(
+                '.day-head .name'
+              )?.textContent
+                .trim()
+                .startsWith(d)
+          );
+
+        if(day){
+
+          openEditor({
+            mode:'week',
+            day,
+            slotId:actEl.dataset.slot
+          });
+
+        }
+
+      }
+
+      else if(
+        act === 'toggle-day'
+      ){
+
+        const body =
+          document.getElementById(
+            'db-'+
+            actEl.dataset.date
+          );
+
+        if(body)
+          body.classList.toggle(
+            'open'
+          );
+
+      }
+
+      else if(
+        act === 'add-day-slot'
+      ){
+
+        openEditor({
+          mode:'day',
+          date:actEl.dataset.date,
+          slotId:null
+        });
+
+      }
+
+      else if(
+        act === 'edit-day-slot'
+      ){
+
+        e.stopPropagation();
+
+        openEditor({
+          mode:'day',
+          date:actEl.dataset.date,
+          slotId:actEl.dataset.slot
+        });
+
+      }
+
+      else if(
+        act === 'reset-day'
+      ){
+
+        const entry =
+          ensureMonthEntryForDate(
+            actEl.dataset.date
+          );
+
+        delete entry.overrides[
+          actEl.dataset.date
+        ];
+
+        saveState();
+        renderMonth();
+        renderWeek();
+
+      }
+
+      else if(
+        act === 'date-week'
+      ){
+
+        dateWeekStart =
+          mondayOfDate(
+            actEl.dataset.date
+          );
+
+        renderMonth();
+
+      }
+
+      else if(
+        act === 'date-week-back'
+      ){
+
+        dateWeekStart = null;
+
+        renderMonth();
+
+      }
+
+      else if(
+        act === 'quick-delete-week'
+      ){
+
+        e.stopPropagation();
+
+        DAYS.forEach(day=>{
+
+          state.weekly[day] =
+            (
+              state.weekly[day] ||
+              []
+            ).filter(
+              s =>
+                s.id !==
+                actEl.dataset.slot
+            );
+
+        });
+
+        saveState();
+        renderWeek();
+
+      }
+
+      else if(
+        act === 'quick-delete-day'
+      ){
+
+        e.stopPropagation();
+
+        const entry =
+          ensureMonthEntryForDate(
+            actEl.dataset.date
+          );
+
+        let base =
+          entry.overrides[
+            actEl.dataset.date
+          ]
+            ? entry.overrides[
+                actEl.dataset.date
+              ].slice()
+            : getEffectiveDaySlots(
+                actEl.dataset.date
+              ).slice();
+
+        entry.overrides[
+          actEl.dataset.date
+        ] =
+          base.filter(
+            s =>
+              s.id !==
+              actEl.dataset.slot
+          );
+
+        saveState();
+        renderMonth();
+        renderWeek();
+
+      }
+
+      return;
+
+    }
+
+    /* episode pick */
+
+    if(
+      t.closest(
+        '.episode-opt'
+      )
+    ){
+
+      const opt =
+        t.closest(
+          '.episode-opt'
+        );
+
+      if(!opt.dataset.title)
+        return;
+
+      const showId =
+        document.getElementById(
+          'sp-show'
+        ).value;
+
+      const show =
+        state.shows.find(
+          s=>s.id === showId
+        );
+
+      editorCtx.selected = {
+
+        showId,
+
+        showName:
+          show.name,
+
+        episodeTitle:
+          opt.dataset.title,
+
+        duration:
+          opt.dataset.dur === ''
+            ? null
+            : +opt.dataset.dur,
+
+        sourcePath:
+          opt.dataset.path || null,
+
+        dataRowIdx:
+          opt.dataset.rowidx === '' ? null : +opt.dataset.rowidx
+
+      };
+
+      renderEpisodePicker(
+        showId,
+        document.getElementById(
+          'sp-search'
+        ).value
+      );
+
+      updateCalc();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'sp-cancel' ||
+      t.id === 'sp-close-x'
+    ){
+
+      closeEditor();
+
+      return;
+
+    }
+
+    if(t.id === 'overlay'){
+
+      closeEditor();
+
+      return;
+
+    }
+
+    /* save slot */
+
+    if(t.id === 'sp-save'){
+
+      const time =
+        document.getElementById(
+          'sp-time'
+        ).value;
+
+      if(
+        !time ||
+        !editorCtx.selected
+      ){
+
+        alert(
+          'Διάλεξε ώρα και επεισόδιο.'
+        );
+
+        return;
+
+      }
+
+      const slotObj = {
+
+        id:
+          editorCtx.slotId ||
+          uid(),
+
+        time,
+
+        showId:
+          editorCtx.selected.showId,
+
+        showName:
+          editorCtx.selected.showName,
+
+        episodeTitle:
+          editorCtx.selected.episodeTitle,
+
+        duration:
+          editorCtx.selected.duration,
+
+        sourcePath:
+          editorCtx.selected.sourcePath || null,
+
+        dataRowIdx:
+          editorCtx.selected.dataRowIdx ?? null,
+
+        writtenBack: false
+
+      };
+
+      if(
+        editorCtx.mode === 'week'
+      ){
+
+        let arr =
+          state.weekly[
+            editorCtx.day
+          ];
+
+        arr =
+          arr.filter(
+            s =>
+              s.id !== slotObj.id
+          );
+
+        arr.push(slotObj);
+
+        state.weekly[
+          editorCtx.day
+        ] = arr;
+
+      }else{
+
+        const entry =
+          ensureMonthEntryForDate(
+            editorCtx.date
+          );
+
+        let base =
+          entry.overrides[
+            editorCtx.date
+          ]
+            ? entry.overrides[
+                editorCtx.date
+              ].slice()
+            : getEffectiveDaySlots(
+                editorCtx.date
+              ).slice();
+
+        base =
+          base.filter(
+            s =>
+              s.id !== slotObj.id
+          );
+
+        base.push(slotObj);
+
+        entry.overrides[
+          editorCtx.date
+        ] = base;
+
+      }
+
+      saveState();
+
+      if(
+        editorCtx.mode === 'week'
+      ){
+
+        renderWeek();
+
+      }else{
+
+        renderMonth();
+        renderWeek();
+
+      }
+
+      if(editorCtx.mode !== 'week' && googleAccessToken){
+
+        const result = await writeBackPlayDate(slotObj, editorCtx.date);
+
+        if(result.ok){
+          renderShows();
+        } else if(!['no-auth','not-auto-show','no-row'].includes(result.reason)){
+          alert('Δεν έγινε εγγραφή πίσω στο sheet: ' + result.reason);
+        }
+
+      }
+
+      closeEditor();
+
+      return;
+
+    }
+
+    /* delete slot */
+
+    if(t.id === 'sp-delete'){
+
+      if(
+        editorCtx.mode === 'week'
+      ){
+
+        state.weekly[
+          editorCtx.day
+        ] =
+          state.weekly[
+            editorCtx.day
+          ].filter(
+            s =>
+              s.id !==
+              editorCtx.slotId
+          );
+
+      }else{
+
+        const entry =
+          ensureMonthEntryForDate(
+            editorCtx.date
+          );
+
+        let base =
+          entry.overrides[
+            editorCtx.date
+          ]
+            ? entry.overrides[
+                editorCtx.date
+              ].slice()
+            : getEffectiveDaySlots(
+                editorCtx.date
+              ).slice();
+
+        entry.overrides[
+          editorCtx.date
+        ] =
+          base.filter(
+            s =>
+              s.id !==
+              editorCtx.slotId
+          );
+
+      }
+
+      saveState();
+
+      if(
+        editorCtx.mode === 'week'
+      ){
+
+        renderWeek();
+
+      }else{
+
+        renderMonth();
+        renderWeek();
+
+      }
+
+      closeEditor();
+
+      return;
+
+    }
+
+    /* month nav */
+
+    if(
+      t.id === 'month-prev' ||
+      t.id === 'month-next'
+    ){
+
+      let {
+        year,
+        month
+      } =
+        state.currentMonth;
+
+      month +=
+        t.id === 'month-next'
+          ? 1
+          : -1;
+
+      if(month < 0){
+
+        month = 11;
+        year--;
+
+      }
+
+      if(month > 11){
+
+        month = 0;
+        year++;
+
+      }
+
+      state.currentMonth = {
+        year,
+        month
+      };
+
+      dateWeekStart = null;
+
+      saveState();
+      renderMonth();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'month-generate'
+    ){
+
+      if(
+        confirm(
+          'Αυτό θα διαγράψει τις μεμονωμένες τροποποιήσεις αυτού του μήνα και θα ξαναγεμίσει τις μέρες από το εβδομαδιαίο πρότυπο. Συνέχεια;'
+        )
+      ){
+
+        generateMonthFromTemplate();
+
+      }
+
+      return;
+
+    }
+
+    if(t.id === 'sync-btn'){
+
+      discoverAndSync();
+
+      return;
+
+    }
+
+    if(t.id === 'google-signin-btn'){
+
+      initGoogleAuth();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'refresh-all-btn'
+    ){
+
+      const original =
+        t.textContent;
+
+      t.textContent =
+        'Ανανέωση...';
+
+      t.disabled = true;
+
+      for(
+        const show of state.shows
+      ){
+
+        await fetchShow(show);
+
+      }
+
+      t.textContent =
+        original;
+
+      t.disabled = false;
+
+      return;
+
+    }
+
+    if(
+      t.id === 'minimize-all-btn'
+    ){
+
+      const anyExpanded =
+        state.shows.some(
+          s=>!s.minimized
+        );
+
+      state.shows.forEach(
+        s =>
+          s.minimized =
+            anyExpanded
+      );
+
+      t.textContent =
+        anyExpanded
+          ? 'Μεγέθυνση όλων'
+          : 'Ελαχιστοποίηση όλων';
+
+      saveState();
+      renderShows();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'add-tab-name'
+    ){
+
+      addTabName();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'copy-cancel' ||
+      t.id === 'copy-overlay'
+    ){
+
+      closeCopyPanel();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'copy-apply'
+    ){
+
+      const checked =
+        Array.from(
+          document.querySelectorAll(
+            '#copy-days-list input:checked'
+          )
+        ).map(
+          el=>el.value
+        );
+
+      const sourceLabel = copyFromDay || 'Δευτέρα (επόμ.)';
+
+      if(
+        checked.length &&
+        confirm(
+          'Αυτό θα αντικαταστήσει τις ζώνες στις επιλεγμένες μέρες με αντίγραφο των ωρών από «' +
+          sourceLabel +
+          '». Συνέχεια;'
+        )
+      ){
+
+        const source =
+          copyFromDate
+            ? getEffectiveDaySlots(copyFromDate)
+            : (state.weekly[copyFromDay] || []);
+
+        checked.forEach(d=>{
+
+          state.weekly[d] =
+            source.map(
+              s =>
+                Object.assign(
+                  {},
+                  s,
+                  {id:uid()}
+                )
+            );
+
+        });
+
+        saveState();
+        renderWeek();
+
+      }
+
+      closeCopyPanel();
+
+      return;
+
+    }
+
+    if(
+      t.id === 'week-clear'
+    ){
+
+      if(
+        confirm(
+          'Αυτό θα διαγράψει ΟΛΕΣ τις ζώνες από όλες τις μέρες (συμπεριλαμβανομένης της Δευτέρας (επόμ.)). Συνέχεια;'
+        )
+      ){
+
+        DAYS.forEach(
+          day =>
+            state.weekly[day] = []
+        );
+
+        const nextMondayStr = dateToISO(getCurrentWeekDates()[7]);
+        const entry = ensureMonthEntryForDate(nextMondayStr);
+        entry.overrides[nextMondayStr] = [];
+
+        saveState();
+        renderWeek();
+
+      }
+
+      return;
+
+    }
+
+    if(
+      t.id === 'week-print'
+    ){
+
+      printSchedule('week');
+
+      return;
+
+    }
+
+    if(
+      t.id === 'month-print'
+    ){
+
+      printSchedule('month');
+
+      return;
+
+    }
+
+    if(
+      t.id === 'week-word'
+    ){
+
+      exportWord('week');
+
+      return;
+
+    }
+
+    if(
+      t.id === 'month-word'
+    ){
+
+      exportWord('month');
+
+      return;
+
+    }
+
+  }
+);
+
+/* ================= INPUT EVENTS ================= */
+
+document.addEventListener(
+  'input',
+  e=>{
+
+    if(
+      e.target.id === 'sp-search'
+    ){
+
+      const showId =
+        document.getElementById(
+          'sp-show'
+        ).value;
+
+      if(showId){
+
+        renderEpisodePicker(
+          showId,
+          e.target.value
+        );
+
+      }
+
+    }
+
+    if(
+      e.target.id === 'sp-time'
+    ){
+
+      updateCalc();
+
+    }
+
+    if(
+      e.target.classList.contains(
+        'ep-search'
+      )
+    ){
+
+      const show =
+        state.shows.find(
+          s =>
+            s.id ===
+            e.target.dataset.show
+        );
+
+      if(!show)
+        return;
+
+      const body =
+        document.getElementById(
+          'ep-body-'+show.id
+        );
+
+      const q =
+        e.target.value.toLowerCase();
+
+      renderEpisodeRows(
+        body,
+        show.episodes.filter(
+          ep =>
+            ep.title
+              .toLowerCase()
+              .includes(q)
+        )
+      );
+
+    }
+
+    if(
+      e.target.classList.contains('debug-search')
+    ){
+
+      const q = e.target.value.toLowerCase();
+      const table = e.target.nextElementSibling;
+      if(table){
+        table.querySelectorAll('tr[data-search]').forEach(tr => {
+          tr.style.display = tr.dataset.search.includes(q) ? '' : 'none';
+        });
+      }
+
+    }
+
+  }
+);
+
+document.addEventListener(
+  'change',
+  e=>{
+
+    if(
+      e.target.id === 'sp-show'
+    ){
+
+      editorCtx.selected = null;
+
+      document.getElementById(
+        'sp-search'
+      ).value = '';
+
+      renderEpisodePicker(
+        e.target.value,
+        ''
+      );
+
+      updateCalc();
+
+    }
+
+    if(
+      e.target.id === 'sp-sort'
+    ){
+
+      episodeSort = e.target.value;
+
+      const showId =
+        document.getElementById('sp-show').value;
+
+      if(showId){
+
+        renderEpisodePicker(
+          showId,
+          document.getElementById('sp-search').value
+        );
+
+      }
+
+    }
+
+    if(
+      e.target.dataset && e.target.dataset.act === 'show-color'
+    ){
+
+      const show =
+        state.shows.find(
+          s => s.id === e.target.dataset.id
+        );
+
+      if(show){
+
+        show.color = e.target.value;
+
+        saveState();
+        renderWeek();
+        renderMonth();
+
+      }
+
+    }
+
+  }
+);
+
+/* ================= EXPORT: PRINT / PDF ================= */
+
+function findEpisodeInfo(showId, episodeTitle){
+  const show = state.shows.find(s => s.id === showId);
+  if(!show || !show.episodes) return null;
+  return show.episodes.find(e => e.title === episodeTitle) || null;
+}
+function effectiveSourcePath(s){
+  if(s.sourcePath) return s.sourcePath;
+  const info = findEpisodeInfo(s.showId, s.episodeTitle);
+  return (info && info.sourcePath) || null;
+}
+
+function showWantsPath(showId){
+  const show = state.shows.find(s => s.id === showId);
+  return !show || show.showPath !== false;
+}
+
+function buildPrintRow(s){
+
+  let html = `
+
+    <div class="p-row">
+
+      <div class="p-row-main">
+
+        <div class="pt">
+          ${s.time}&ndash;${addDuration(s.time, s.duration||0)}
+        </div>
+
+        <div class="pe">
+          ${escapeHtml(s.episodeTitle)}
+          <span class="ps">(${escapeHtml(s.showName)})</span>
+        </div>
+
+      </div>
+
+  `;
+
+  if(showWantsPath(s.showId) && effectiveSourcePath(s)){
+
+    html += `
+      <div class="p-path-inline">
+        ${escapeHtml(effectiveSourcePath(s))}
+      </div>
+    `;
+
+  }
+
+  html += `</div>`;
+
+  return html;
+
+}
+
+function printSchedule(mode){
+
+  const root =
+    document.getElementById(
+      'print-root'
+    );
+
+  let html = '';
+
+  if(mode === 'week'){
+
+    html += `
+
+      <div class="p-header">
+        <div>
+          <div class="p-brand">Πρόγραμμα Εκπομπών</div>
+          <div class="p-title">
+            Εβδομαδιαίο Πρόγραμμα
+          </div>
+        </div>
+        <div class="p-sub">
+          Εβδομάδα Δευτέρα → Κυριακή<br>
+          Εξήχθη ${new Date().toLocaleDateString('el-GR')}
+        </div>
+      </div>
+
+    `;
+
+    const weekDates = getCurrentWeekDates();
+
+    DAYS.forEach((day,di)=>{
+
+      const slots =
+        (state.weekly[day]||[])
+          .slice()
+          .sort(
+            (a,b)=>
+              timeToMin(a.time) -
+              timeToMin(b.time)
+          );
+
+      const dLabel = weekDates[di].getDate()+'/'+(weekDates[di].getMonth()+1);
+
+      html += `
+
+        <div class="p-day">
+
+          <h4>
+            ${day} <span style="font-weight:400;opacity:.8;">${dLabel}</span>
+          </h4>
+
+          ${
+            slots.length
+              ? slots.map(buildPrintRow).join('')
+              : `
+
+                  <div class="p-row">
+
+                    <div class="p-row-main">
+                      <div class="pe ps">
+                        Καμία ζώνη
+                      </div>
+                    </div>
+
+                  </div>
+
+                `
+          }
+
+        </div>
+
+      `;
+
+    });
+
+    const nextMondayStr = dateToISO(weekDates[7]);
+    const nextMondaySlots = ensureIndependentDay(nextMondayStr).slice().sort((a,b)=>timeToMin(a.time)-timeToMin(b.time));
+    const nextMondayLabel = weekDates[7].getDate()+'/'+(weekDates[7].getMonth()+1);
+
+    html += `
+
+      <div class="p-day">
+
+        <h4>
+          Δευτέρα (επόμ.) <span style="font-weight:400;opacity:.8;">${nextMondayLabel}</span>
+        </h4>
+
+        ${
+          nextMondaySlots.length
+            ? nextMondaySlots.map(buildPrintRow).join('')
+            : `
+                <div class="p-row">
+                  <div class="p-row-main">
+                    <div class="pe ps">Καμία ζώνη</div>
+                  </div>
+                </div>
+              `
+        }
+
+      </div>
+
+    `;
+
+  }else{
+
+    const {
+      year,
+      month
+    } =
+      state.currentMonth;
+
+    html += `
+
+      <div class="p-header">
+        <div>
+          <div class="p-brand">Πρόγραμμα Εκπομπών</div>
+          <div class="p-title">
+            Μηνιαίο Πρόγραμμα —
+            ${
+              new Date(
+                year,
+                month,
+                1
+              ).toLocaleDateString(
+                'el-GR',
+                {
+                  month:'long',
+                  year:'numeric'
+                }
+              )
+            }
+          </div>
+        </div>
+        <div class="p-sub">
+          Εξήχθη ${new Date().toLocaleDateString('el-GR')}
+        </div>
+      </div>
+
+    `;
+
+    const total =
+      daysInMonth(
+        year,
+        month
+      );
+
+    for(
+      let d=1;
+      d<=total;
+      d++
+    ){
+
+      const dateStr =
+        year +
+        '-' +
+        String(month+1)
+          .padStart(2,'0') +
+        '-' +
+        String(d)
+          .padStart(2,'0');
+
+      const dateObj =
+        new Date(
+          year,
+          month,
+          d
+        );
+
+      const slots =
+        getEffectiveDaySlots(
+          dateStr
+        )
+        .slice()
+        .sort(
+          (a,b)=>
+            timeToMin(a.time) -
+            timeToMin(b.time)
+        );
+
+      html += `
+
+        <div class="p-day">
+
+          <h4>
+
+            ${weekdayNameFromDate(
+              dateStr
+            )}
+
+            ${d}
+
+            &mdash;
+
+            ${dateObj.toLocaleDateString(
+              'el-GR'
+            )}
+
+          </h4>
+
+          ${
+            slots.length
+              ? slots.map(buildPrintRow).join('')
+              : `
+
+                  <div class="p-row">
+
+                    <div class="p-row-main">
+                      <div class="pe ps">
+                        Καμία ζώνη
+                      </div>
+                    </div>
+
+                  </div>
+
+                `
+          }
+
+        </div>
+
+      `;
+
+    }
+
+  }
+
+  root.innerHTML = html;
+
+  window.print();
+
+}
+
+/* ================= WORD ================= */
+
+function buildWordRow(s, i){
+
+  const zebra = (i % 2 === 1) ? 'background:#fbf6ec;' : '';
+
+  let row = `
+
+    <tr>
+
+      <td style="${zebra}font-family:Calibri,Arial,sans-serif;font-weight:700;color:#b5760b;white-space:nowrap;">
+        ${s.time}&ndash;${addDuration(s.time, s.duration||0)}
+      </td>
+
+      <td style="${zebra}font-family:Calibri,Arial,sans-serif;">
+        ${escapeHtml(s.episodeTitle)}
+        ${
+          (showWantsPath(s.showId) && effectiveSourcePath(s))
+            ? `<br/><span style="background:#fbf6ec;border-left:3px solid #e8a33d;padding:2px 8px;font-weight:700;font-size:10.5px;color:#555;display:inline-block;margin-top:4px;">${escapeHtml(effectiveSourcePath(s))}</span>`
+            : ''
+        }
+      </td>
+
+      <td style="${zebra}font-family:Calibri,Arial,sans-serif;color:#555;">
+        ${escapeHtml(s.showName)}
+      </td>
+
+    </tr>
+
+  `;
+
+  return row;
+
+}
+
+function exportWord(mode){
+
+  let body = '';
+
+  if(mode === 'week'){
+
+    body += `
+
+      <div style="font-family:Calibri,Arial,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:2px;">Πρόγραμμα Εκπομπών</div>
+      <h1 style="font-family:Calibri,Arial,sans-serif;color:#141414;border-bottom:3px solid #e8a33d;padding-bottom:8px;margin:0 0 6px;">
+        Εβδομαδιαίο Πρόγραμμα
+      </h1>
+
+      <p style="font-family:Calibri,Arial,sans-serif;color:#777;font-size:11px;margin:0 0 18px;">
+        Εβδομάδα: Δευτέρα → Κυριακή
+      </p>
+
+    `;
+
+    DAYS.forEach(day=>{
+
+      const slots =
+        (state.weekly[day]||[])
+          .slice()
+          .sort(
+            (a,b)=>
+              timeToMin(a.time) -
+              timeToMin(b.time)
+          );
+
+      body += `
+
+        <h3 style="font-family:Calibri,Arial,sans-serif;color:#fff;background:#2a2d33;padding:6px 12px;margin:0 0 6px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;">
+          ${day}
+        </h3>
+
+        <table
+          border="0"
+          cellspacing="0"
+          cellpadding="7"
+          style="
+            border-collapse:collapse;
+            width:100%;
+            font-family:Calibri,Arial,sans-serif;
+            font-size:12px;
+            margin-bottom:6px;">
+
+          <tr style="background:#2a2d33;">
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Ώρα
+            </th>
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Επεισόδιο
+            </th>
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Εκπομπή
+            </th>
+
+          </tr>
+
+          ${
+            slots.length
+              ? slots.map((s,i)=>buildWordRow(s,i)).join('')
+              : `
+
+                  <tr>
+
+                    <td colspan="3">
+                      Καμία ζώνη
+                    </td>
+
+                  </tr>
+
+                `
+          }
+
+        </table>
+
+        <br/>
+
+      `;
+
+    });
+
+  }else{
+
+    const {
+      year,
+      month
+    } =
+      state.currentMonth;
+
+    const label =
+      new Date(
+        year,
+        month,
+        1
+      ).toLocaleDateString(
+        'el-GR',
+        {
+          month:'long',
+          year:'numeric'
+        }
+      );
+
+    body += `
+
+      <div style="font-family:Calibri,Arial,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:2px;">Πρόγραμμα Εκπομπών</div>
+      <h1 style="font-family:Calibri,Arial,sans-serif;color:#141414;border-bottom:3px solid #e8a33d;padding-bottom:8px;margin:0 0 18px;">
+        Μηνιαίο Πρόγραμμα —
+        ${label}
+      </h1>
+
+    `;
+
+    const total =
+      daysInMonth(
+        year,
+        month
+      );
+
+    for(
+      let d=1;
+      d<=total;
+      d++
+    ){
+
+      const dateStr =
+        year +
+        '-' +
+        String(month+1)
+          .padStart(2,'0') +
+        '-' +
+        String(d)
+          .padStart(2,'0');
+
+      const dateObj =
+        new Date(
+          year,
+          month,
+          d
+        );
+
+      const slots =
+        getEffectiveDaySlots(
+          dateStr
+        )
+        .slice()
+        .sort(
+          (a,b)=>
+            timeToMin(a.time) -
+            timeToMin(b.time)
+        );
+
+      body += `
+
+        <h3 style="font-family:Calibri,Arial,sans-serif;color:#fff;background:#2a2d33;padding:6px 12px;margin:0 0 6px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;">
+
+          ${weekdayNameFromDate(
+            dateStr
+          )}
+
+          ${d}
+
+          &mdash;
+
+          ${dateObj.toLocaleDateString(
+            'el-GR'
+          )}
+
+        </h3>
+
+        <table
+          border="0"
+          cellspacing="0"
+          cellpadding="7"
+          style="
+            border-collapse:collapse;
+            width:100%;
+            font-family:Calibri,Arial,sans-serif;
+            font-size:12px;
+            margin-bottom:6px;">
+
+          <tr style="background:#2a2d33;">
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Ώρα
+            </th>
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Επεισόδιο
+            </th>
+
+            <th align="left" style="color:#fff;font-weight:600;">
+              Εκπομπή
+            </th>
+
+          </tr>
+
+          ${
+            slots.length
+              ? slots.map((s,i)=>buildWordRow(s,i)).join('')
+              : `
+
+                  <tr>
+
+                    <td colspan="3">
+                      Καμία ζώνη
+                    </td>
+
+                  </tr>
+
+                `
+          }
+
+        </table>
+
+        <br/>
+
+      `;
+
+    }
+
+  }
+
+  const full = `
+
+    <html
+      xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+
+      <head>
+
+        <meta charset="utf-8">
+
+        <title>
+          Πρόγραμμα
+        </title>
+
+      </head>
+
+      <body>
+        ${body}
+      </body>
+
+    </html>
+
+  `;
+
+  const blob =
+    new Blob(
+      [
+        '\ufeff',
+        full
+      ],
+      {
+        type:'application/msword'
+      }
+    );
+
+  const a =
+    document.createElement('a');
+
+  a.href =
+    URL.createObjectURL(blob);
+
+  a.download =
+    mode === 'week'
+      ? 'evdomadiaio-programma.doc'
+      : 'miniaio-programma.doc';
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  document.body.removeChild(a);
+
+}
+
+/* ================= INIT ================= */
+
+function render(){
+
+  renderShows();
+  renderWeek();
+  renderMonth();
+
+}
+
+(async function init(){
+
+  await loadState();
+
+  render();
+
+})();
+
+</script>
+
+</body>
+</html>
