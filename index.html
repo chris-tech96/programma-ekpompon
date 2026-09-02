@@ -2170,7 +2170,7 @@ async function fetchAutoShowRows(show){
       .slice(2);
 
   const url =
-    `https://docs.google.com/spreadsheets/d/${state.spreadsheet.id}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(show.name)}`;
+    `https://docs.google.com/spreadsheets/d/${state.spreadsheet.id}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(show.name)}&range=A1:Z5000&headers=0`;
 
   const response =
     await jsonpFetch(
