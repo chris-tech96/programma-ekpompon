@@ -2189,19 +2189,10 @@ async function fetchAutoShowRows(show){
 
   const rows = [];
 
-  const colLabels =
-    (table.cols||[])
-      .map(c=>c.label||'');
-
-  if(
-    colLabels.some(
-      l=>l && l.trim() !== ''
-    )
-  ){
-
-    rows.push(colLabels);
-
-  }
+  // NOTE: we intentionally do NOT push table.cols labels as a fake row here.
+  // Google's gviz often assigns default column labels (e.g. "A","B") even when
+  // the sheet has no real header row, and treating that as row 1 shifted every
+  // real row's index by one — which broke exact row targeting for write-back.
 
   (table.rows||[]).forEach(r=>{
 
