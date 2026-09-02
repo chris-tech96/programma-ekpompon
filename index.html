@@ -2440,34 +2440,63 @@ async function writeBackPlayDate(slot, dateISO){
 
   const show = state.shows.find(s => s.id === slot.showId);
   if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
-  if(slot.dataRowIdx === null || slot.dataRowIdx === undefined) return { ok:false, reason:'no-row' };
-
-  const rawRowIdx = (show.hasHeader ? 1 : 0) + slot.dataRowIdx;
-  const row = show.rawRows && show.rawRows[rawRowIdx];
-  if(!row) return { ok:false, reason:'row-missing' };
 
   const dateStart = (show.dateStartCol !== undefined && show.dateStartCol !== null) ? show.dateStartCol : 3;
-
-  let targetCol = -1;
-  for(let c = dateStart; c < Math.max(row.length, dateStart + 1); c++){
-    if(!row[c] || String(row[c]).trim() === ''){
-      targetCol = c;
-      break;
-    }
-  }
-  if(targetCol === -1) targetCol = row.length;
-
-  const dateStr = formatDateForSheet(dateISO);
-  const colLetter = columnNumberToLetter(targetCol + 1);
-  const sheetRow = rawRowIdx + 1 + (show.gvizHeaderOffset || 0);
+  const titleCol = show.titleCol ?? 0;
   const safeSheetName = show.name.replace(/'/g, "''");
-  const range = `'${safeSheetName}'!${colLetter}${sheetRow}`;
+
+  const lastColLetter = columnNumberToLetter(dateStart + 60);
+  const readRange = `'${safeSheetName}'!A1:${lastColLetter}5000`;
 
   try{
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+    // Read live, authoritative data directly from the Sheets API — row numbers
+    // here are guaranteed to match the real sheet exactly, no gviz ambiguity.
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(readRange)}`;
 
-    const res = await fetch(url, {
+    const getRes = await fetch(getUrl, {
+      headers: { 'Authorization': 'Bearer ' + googleAccessToken }
+    });
+
+    if(!getRes.ok){
+      const errData = await getRes.json().catch(()=>({}));
+      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+getRes.status) };
+    }
+
+    const data = await getRes.json();
+    const values = data.values || [];
+
+    const targetTitle = (slot.episodeTitle || '').trim();
+    let foundRowIdx = -1;
+
+    for(let i=0; i<values.length; i++){
+      if((values[i][titleCol] || '').trim() === targetTitle){
+        foundRowIdx = i;
+        break;
+      }
+    }
+
+    if(foundRowIdx === -1) return { ok:false, reason:'title-not-found' };
+
+    const row = values[foundRowIdx];
+
+    let targetCol = -1;
+    for(let c = dateStart; c < dateStart + 60; c++){
+      if(!row[c] || String(row[c]).trim() === ''){
+        targetCol = c;
+        break;
+      }
+    }
+    if(targetCol === -1) targetCol = Math.max(row.length, dateStart);
+
+    const dateStr = formatDateForSheet(dateISO);
+    const colLetter = columnNumberToLetter(targetCol + 1);
+    const sheetRow = foundRowIdx + 1;
+    const writeRange = `'${safeSheetName}'!${colLetter}${sheetRow}`;
+
+    const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
+
+    const putRes = await fetch(putUrl, {
       method: 'PUT',
       headers: {
         'Authorization': 'Bearer ' + googleAccessToken,
@@ -2476,17 +2505,13 @@ async function writeBackPlayDate(slot, dateISO){
       body: JSON.stringify({ values: [[dateStr]] })
     });
 
-    if(!res.ok){
-      const errData = await res.json().catch(()=>({}));
-      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+res.status) };
+    if(!putRes.ok){
+      const errData = await putRes.json().catch(()=>({}));
+      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+putRes.status) };
     }
 
-    // keep local raw data + episode in sync for this session
-    while(row.length <= targetCol) row.push('');
-    row[targetCol] = dateStr;
-
-    computeEpisodes(show);
-    saveState();
+    // pull the show fresh right away so the app reflects the sheet immediately
+    await fetchShow(show);
 
     return { ok:true };
 
@@ -4779,6 +4804,12 @@ document.addEventListener(
 
       });
 
+      if(t.dataset.tab === 'shows' && state.spreadsheet && state.spreadsheet.id){
+        for(const show of state.shows.filter(s => s.source === 'auto')){
+          fetchShow(show);
+        }
+      }
+
       return;
 
     }
@@ -6697,7 +6728,7 @@ function render(){
       await fetchShow(show);
     }
 
-  }, 3 * 60 * 1000);
+  }, 30 * 1000);
 
 })();
 
