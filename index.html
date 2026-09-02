@@ -4890,7 +4890,7 @@ document.addEventListener(
 
       });
 
-      if(t.dataset.tab === 'shows' && state.spreadsheet && state.spreadsheet.id){
+      if(state.spreadsheet && state.spreadsheet.id){
         for(const show of state.shows.filter(s => s.source === 'auto')){
           fetchShow(show);
         }
