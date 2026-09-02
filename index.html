@@ -792,12 +792,78 @@ table.episodes tr:hover td{
     word-break:break-all;
   }
 }
+
+/* ACCESS GATE */
+
+.access-gate{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.access-gate.hidden{
+  display:none;
+}
+
+.access-gate-box{
+  max-width:420px;
+  width:92%;
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-radius:6px;
+  padding:36px 32px;
+  text-align:center;
+}
+
+.access-gate-box h1{
+  font-size:22px;
+  margin-bottom:8px;
+}
+
+.access-gate-box p{
+  color:var(--text-dim);
+  font-size:13px;
+  margin:0 0 22px;
+}
+
+.access-gate-status{
+  margin-top:16px;
+  font-size:12.5px;
+  color:var(--text-dim);
+  min-height:18px;
+}
+
+.access-gate-status.denied{
+  color:var(--live);
+  font-weight:600;
+}
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="access-gate" id="access-gate">
+  <div class="access-gate-box">
+    <h1>Πρόγραμμα Εκπομπών</h1>
+    <p>Χρειάζεται σύνδεση με εγκεκριμένο λογαριασμό Google για πρόσβαση.</p>
+
+    <div id="gate-clientid-field" class="hidden" style="margin-bottom:16px;text-align:left;">
+      <label>OAuth Client ID (μία φορά ανά συσκευή)</label>
+      <input type="text" id="gate-client-id" placeholder="xxxxxxxxxx.apps.googleusercontent.com">
+    </div>
+
+    <button class="btn" id="gate-signin-btn" style="width:100%;">Σύνδεση με Google</button>
+
+    <div class="access-gate-status" id="access-gate-status"></div>
+  </div>
+</div>
+
+<div class="app hidden" id="app-root">
+
 
   <div class="topbar">
     <div class="brand">
@@ -941,6 +1007,19 @@ table.episodes tr:hover td{
         </div>
 
         <p class="hint" id="google-auth-status" style="margin:10px 0 0;"></p>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-soft);">
+          <label>Ποιος έχει πρόσβαση σε αυτή την εφαρμογή</label>
+          <div id="allowed-emails-list" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;"></div>
+          <div class="row">
+            <div>
+              <input type="text" id="new-allowed-email" placeholder="email@gmail.com">
+            </div>
+            <div style="flex:0 0 auto;align-self:end;">
+              <button class="btn secondary small" id="add-allowed-email-btn">+ Προσθήκη πρόσβασης</button>
+            </div>
+          </div>
+        </div>
 
       </details>
 
@@ -1282,6 +1361,12 @@ let uid = () =>
 let googleTokenClient = null;
 let googleAccessToken = null;
 let googleAuthPending = false;
+let currentUserEmail = null;
+
+const ALLOWED_EMAILS_DEFAULT = [
+  'pontostvcam@gmail.com',
+  'chriszafiridis96@gmail.com'
+];
 
 /* ================= STORAGE ================= */
 
@@ -2421,7 +2506,7 @@ function initGoogleAuth(){
 
     googleTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      scope: 'https://www.googleapis.com/auth/spreadsheets email profile',
       callback: (response) => {
         googleAuthPending = false;
         if(response && response.access_token){
@@ -2443,6 +2528,129 @@ function initGoogleAuth(){
     googleAuthPending = false;
     status.textContent = 'Σφάλμα: ' + e.message;
   }
+
+}
+
+/* ================= ACCESS GATE ================= */
+
+function isEmailAllowed(email){
+  if(!email) return false;
+  const list = ALLOWED_EMAILS_DEFAULT.concat(state.allowedEmails || []);
+  return list.some(e => e.toLowerCase() === email.toLowerCase());
+}
+
+function renderAllowedEmails(){
+  const box = document.getElementById('allowed-emails-list');
+  if(!box) return;
+
+  const custom = state.allowedEmails || [];
+
+  const baseChips = ALLOWED_EMAILS_DEFAULT.map(e => `
+    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12.5px;color:var(--text-dim);">
+      ${escapeHtml(e)}
+    </span>`).join('');
+
+  const customChips = custom.map(e => `
+    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--border);border-radius:20px;padding:5px 6px 5px 12px;font-size:12.5px;">
+      ${escapeHtml(e)}
+      <button data-act="remove-allowed-email" data-email="${escapeHtml(e)}" style="background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:14px;line-height:1;padding:2px 6px;">&times;</button>
+    </span>`).join('');
+
+  box.innerHTML = baseChips + customChips;
+}
+
+async function fetchUserEmail(token){
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if(!res.ok) return null;
+  const data = await res.json();
+  return data.email || null;
+}
+
+async function runAccessGate(){
+
+  const gate = document.getElementById('access-gate');
+  const appRoot = document.getElementById('app-root');
+  const status = document.getElementById('access-gate-status');
+  const clientIdField = document.getElementById('gate-clientid-field');
+  const clientIdInput = document.getElementById('gate-client-id');
+
+  const savedClientId = (state.spreadsheet && state.spreadsheet.oauthClientId) || '';
+  if(savedClientId){
+    clientIdInput.value = savedClientId;
+  } else {
+    clientIdField.classList.remove('hidden');
+  }
+
+  document.getElementById('gate-signin-btn').addEventListener('click', () => {
+
+    const clientId = clientIdInput.value.trim();
+
+    if(!clientId){
+      clientIdField.classList.remove('hidden');
+      status.textContent = 'Βάλε πρώτα το OAuth Client ID.';
+      status.classList.add('denied');
+      return;
+    }
+
+    if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
+      status.textContent = 'Η βιβλιοθήκη Google δεν φόρτωσε ακόμα — δοκίμασε ξανά σε λίγο.';
+      status.classList.add('denied');
+      return;
+    }
+
+    if(!state.spreadsheet) state.spreadsheet = { tabNames: [] };
+    state.spreadsheet.oauthClientId = clientId;
+    saveState();
+
+    status.classList.remove('denied');
+    status.textContent = 'Σύνδεση...';
+
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/spreadsheets email profile',
+      callback: async (response) => {
+
+        if(!response || !response.access_token){
+          status.textContent = 'Η σύνδεση απέτυχε ή ακυρώθηκε.';
+          status.classList.add('denied');
+          return;
+        }
+
+        googleAccessToken = response.access_token;
+        status.textContent = 'Έλεγχος λογαριασμού...';
+
+        const email = await fetchUserEmail(googleAccessToken);
+
+        if(email && isEmailAllowed(email)){
+
+          currentUserEmail = email;
+          gate.classList.add('hidden');
+          appRoot.classList.remove('hidden');
+          render();
+          startBackgroundSync();
+
+        } else {
+
+          googleAccessToken = null;
+          status.textContent = email
+            ? ('Ο λογαριασμός "' + email + '" δεν έχει πρόσβαση σε αυτή την εφαρμογή.')
+            : 'Δεν ήταν δυνατή η επιβεβαίωση του λογαριασμού.';
+          status.classList.add('denied');
+
+        }
+
+      },
+      error_callback: (err) => {
+        status.textContent = 'Σφάλμα σύνδεσης: ' + (err && err.type ? err.type : 'άγνωστο');
+        status.classList.add('denied');
+      }
+    });
+
+    client.requestAccessToken();
+
+  });
 
 }
 
@@ -6005,6 +6213,42 @@ document.addEventListener(
 
     }
 
+    if(t.id === 'add-allowed-email-btn'){
+
+      const input = document.getElementById('new-allowed-email');
+      const email = input.value.trim();
+
+      if(!email || !email.includes('@')){
+        alert('Βάλε ένα έγκυρο email.');
+        return;
+      }
+
+      if(!state.allowedEmails) state.allowedEmails = [];
+
+      if(!isEmailAllowed(email)){
+        state.allowedEmails.push(email);
+        saveState();
+        renderAllowedEmails();
+      }
+
+      input.value = '';
+
+      return;
+
+    }
+
+    if(t.dataset && t.dataset.act === 'remove-allowed-email'){
+
+      state.allowedEmails =
+        (state.allowedEmails || []).filter(e => e.toLowerCase() !== t.dataset.email.toLowerCase());
+
+      saveState();
+      renderAllowedEmails();
+
+      return;
+
+    }
+
     if(
       t.id === 'copy-cancel' ||
       t.id === 'copy-overlay'
@@ -6906,14 +7150,11 @@ function render(){
   renderShows();
   renderWeek();
   renderMonth();
+  renderAllowedEmails();
 
 }
 
-(async function init(){
-
-  await loadState();
-
-  render();
+function startBackgroundSync(){
 
   setInterval(async () => {
 
@@ -6924,6 +7165,14 @@ function render(){
     }
 
   }, 30 * 1000);
+
+}
+
+(async function init(){
+
+  await loadState();
+
+  await runAccessGate();
 
 })();
 
