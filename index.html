@@ -2521,6 +2521,92 @@ async function writeBackPlayDate(slot, dateISO){
 
 }
 
+async function clearBackPlayDate(slot, dateISO){
+
+  if(!googleAccessToken) return { ok:false, reason:'no-auth' };
+  if(!state.spreadsheet || !state.spreadsheet.id) return { ok:false, reason:'no-spreadsheet' };
+
+  const show = state.shows.find(s => s.id === slot.showId);
+  if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
+
+  const dateStart = (show.dateStartCol !== undefined && show.dateStartCol !== null) ? show.dateStartCol : 3;
+  const titleCol = show.titleCol ?? 0;
+  const safeSheetName = show.name.replace(/'/g, "''");
+
+  const lastColLetter = columnNumberToLetter(dateStart + 60);
+  const readRange = `'${safeSheetName}'!A1:${lastColLetter}5000`;
+
+  try{
+
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(readRange)}`;
+
+    const getRes = await fetch(getUrl, {
+      headers: { 'Authorization': 'Bearer ' + googleAccessToken }
+    });
+
+    if(!getRes.ok){
+      const errData = await getRes.json().catch(()=>({}));
+      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+getRes.status) };
+    }
+
+    const data = await getRes.json();
+    const values = data.values || [];
+
+    const targetTitle = (slot.episodeTitle || '').trim();
+    let foundRowIdx = -1;
+
+    for(let i=0; i<values.length; i++){
+      if((values[i][titleCol] || '').trim() === targetTitle){
+        foundRowIdx = i;
+        break;
+      }
+    }
+
+    if(foundRowIdx === -1) return { ok:false, reason:'title-not-found' };
+
+    const row = values[foundRowIdx];
+    const dateStr = formatDateForSheet(dateISO);
+
+    let targetCol = -1;
+    for(let c = dateStart; c < row.length; c++){
+      if((row[c] || '').trim() === dateStr){
+        targetCol = c;
+        break;
+      }
+    }
+
+    if(targetCol === -1) return { ok:false, reason:'date-not-found' };
+
+    const colLetter = columnNumberToLetter(targetCol + 1);
+    const sheetRow = foundRowIdx + 1;
+    const writeRange = `'${safeSheetName}'!${colLetter}${sheetRow}`;
+
+    const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheet.id}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
+
+    const putRes = await fetch(putUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + googleAccessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [['']] })
+    });
+
+    if(!putRes.ok){
+      const errData = await putRes.json().catch(()=>({}));
+      return { ok:false, reason: (errData.error && errData.error.message) || ('HTTP '+putRes.status) };
+    }
+
+    await fetchShow(show);
+
+    return { ok:true };
+
+  }catch(e){
+    return { ok:false, reason: e.message };
+  }
+
+}
+
 /* ================= SYNC ================= */
 
 async function discoverAndSync(){
@@ -5357,6 +5443,11 @@ document.addEventListener(
                 actEl.dataset.date
               ).slice();
 
+        const deletedSlot =
+          base.find(
+            s => s.id === actEl.dataset.slot
+          ) || null;
+
         entry.overrides[
           actEl.dataset.date
         ] =
@@ -5369,6 +5460,18 @@ document.addEventListener(
         saveState();
         renderMonth();
         renderWeek();
+
+        if(googleAccessToken && deletedSlot){
+
+          const result = await clearBackPlayDate(deletedSlot, actEl.dataset.date);
+
+          if(result.ok){
+            renderShows();
+          } else if(!['no-auth','not-auto-show','title-not-found','date-not-found'].includes(result.reason)){
+            alert('Δεν έγινε διαγραφή από το sheet: ' + result.reason);
+          }
+
+        }
 
       }
 
@@ -5599,9 +5702,16 @@ document.addEventListener(
 
     if(t.id === 'sp-delete'){
 
+      let deletedSlot = null;
+
       if(
         editorCtx.mode === 'week'
       ){
+
+        deletedSlot =
+          state.weekly[editorCtx.day].find(
+            s => s.id === editorCtx.slotId
+          ) || null;
 
         state.weekly[
           editorCtx.day
@@ -5632,6 +5742,11 @@ document.addEventListener(
                 editorCtx.date
               ).slice();
 
+        deletedSlot =
+          base.find(
+            s => s.id === editorCtx.slotId
+          ) || null;
+
         entry.overrides[
           editorCtx.date
         ] =
@@ -5655,6 +5770,18 @@ document.addEventListener(
 
         renderMonth();
         renderWeek();
+
+      }
+
+      if(editorCtx.mode !== 'week' && googleAccessToken && deletedSlot){
+
+        const result = await clearBackPlayDate(deletedSlot, editorCtx.date);
+
+        if(result.ok){
+          renderShows();
+        } else if(!['no-auth','not-auto-show','title-not-found','date-not-found'].includes(result.reason)){
+          alert('Δεν έγινε διαγραφή από το sheet: ' + result.reason);
+        }
 
       }
 
