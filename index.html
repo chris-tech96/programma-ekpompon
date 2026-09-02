@@ -5432,7 +5432,20 @@ document.addEventListener(
 
         e.stopPropagation();
 
+        let deletedSlot = null;
+        let deletedDay = null;
+
         DAYS.forEach(day=>{
+
+          const found =
+            (state.weekly[day]||[]).find(
+              s => s.id === actEl.dataset.slot
+            );
+
+          if(found){
+            deletedSlot = found;
+            deletedDay = day;
+          }
 
           state.weekly[day] =
             (
@@ -5448,6 +5461,21 @@ document.addEventListener(
 
         saveState();
         renderWeek();
+
+        if(googleAccessToken && deletedSlot && deletedDay){
+
+          const writeDate =
+            dateToISO(getCurrentWeekDates()[DAYS.indexOf(deletedDay)]);
+
+          const result = await clearBackPlayDate(deletedSlot, writeDate);
+
+          if(result.ok){
+            renderShows();
+          } else if(!['no-auth','not-auto-show','title-not-found','date-not-found'].includes(result.reason)){
+            alert('Δεν έγινε διαγραφή από το sheet: ' + result.reason);
+          }
+
+        }
 
       }
 
@@ -5808,9 +5836,14 @@ document.addEventListener(
 
       }
 
-      if(editorCtx.mode !== 'week' && googleAccessToken && deletedSlot){
+      if(googleAccessToken && deletedSlot){
 
-        const result = await clearBackPlayDate(deletedSlot, editorCtx.date);
+        const writeDate =
+          editorCtx.mode === 'week'
+            ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(editorCtx.day)])
+            : editorCtx.date;
+
+        const result = await clearBackPlayDate(deletedSlot, writeDate);
 
         if(result.ok){
           renderShows();
