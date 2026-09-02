@@ -2270,7 +2270,11 @@ async function fetchAutoShowRows(show){
 
 /* ================= FETCH SHOW ================= */
 
+let fetchSeq = {};
+
 async function fetchShow(show){
+
+  const mySeq = (fetchSeq[show.id] = (fetchSeq[show.id]||0) + 1);
 
   show.status = 'loading';
   show.error = null;
@@ -2299,6 +2303,8 @@ async function fetchShow(show){
           show
         );
 
+      if(fetchSeq[show.id] !== mySeq) return; // a newer fetch for this show already started — discard this one
+
       rows = fetched.rows;
       show.gvizHeaderOffset = fetched.gvizHeaderOffset;
 
@@ -2307,6 +2313,8 @@ async function fetchShow(show){
       const res =
         await fetch(show.url);
 
+      if(fetchSeq[show.id] !== mySeq) return;
+
       if(!res.ok)
         throw new Error(
           'HTTP ' + res.status
@@ -2314,6 +2322,8 @@ async function fetchShow(show){
 
       const text =
         await res.text();
+
+      if(fetchSeq[show.id] !== mySeq) return;
 
       rows =
         parseCSV(text);
@@ -2362,6 +2372,8 @@ async function fetchShow(show){
 
   }catch(e){
 
+    if(fetchSeq[show.id] !== mySeq) return;
+
     show.status = 'err';
 
     show.error =
@@ -2372,6 +2384,8 @@ async function fetchShow(show){
         : 'Δεν διαβάστηκε το link. Βεβαιώσου ότι είναι δημοσιευμένο ως CSV και δημόσια προσβάσιμο.';
 
   }
+
+  if(fetchSeq[show.id] !== mySeq) return; // superseded — don't save/render stale state
 
   saveState();
   render();
