@@ -1955,15 +1955,25 @@ function isPathLike(s){
 
 }
 
+function getDataRows(show){
+  const rows = show.rawRows || [];
+  const firstRowIsPath =
+    rows.length > 0 &&
+    rows[0].some(cell => isPathLike((cell||'').trim()));
+  const skipFirst = show.hasHeader && !firstRowIsPath;
+  return {
+    dataRows: skipFirst ? rows.slice(1) : rows,
+    firstRowIsPath,
+    skipFirst
+  };
+}
+
 function computeEpisodes(show){
 
   const rows =
     show.rawRows || [];
 
-  const dataRows =
-    show.hasHeader
-      ? rows.slice(1)
-      : rows;
+  const { dataRows } = getDataRows(show);
 
   const tIdx =
     show.titleCol;
@@ -5090,7 +5100,7 @@ document.addEventListener(
             box.innerHTML = '<p class="hint" style="margin:8px 0;">Δεν υπάρχουν ακόμα δεδομένα — πάτα πρώτα "Ανανέωση".</p>';
           } else {
 
-            const rows = show.hasHeader ? show.rawRows.slice(1) : show.rawRows;
+            const { dataRows: rows, firstRowIsPath, skipFirst } = getDataRows(show);
             const tIdx = show.titleCol ?? 0;
             const dIdx = show.durCol ?? 1;
 
@@ -5099,7 +5109,13 @@ document.addEventListener(
 
             let html = `
               <input type="text" class="debug-search" data-id="${show.id}" placeholder="Φίλτρο τίτλου... (π.χ. XOROS SYLLOGOY)" style="margin-bottom:8px;">
-              <p class="hint" style="margin:0 0 8px;">Στήλη τίτλου: <b>${columnNumberToLetter(tIdx+1)}</b> &middot; Στήλη διάρκειας: <b>${columnNumberToLetter(dIdx+1)}</b> (τονισμένη παρακάτω)</p>
+              <p class="hint" style="margin:0 0 8px;">
+                Στήλη τίτλου: <b>${columnNumberToLetter(tIdx+1)}</b> &middot; Στήλη διάρκειας: <b>${columnNumberToLetter(dIdx+1)}</b> (τονισμένη παρακάτω)<br>
+                Σύνολο ωμών γραμμών από το sheet: <b>${(show.rawRows||[]).length}</b> &middot;
+                "Πρώτη γραμμή = επικεφαλίδες": <b>${show.hasHeader ? 'Ναι' : 'Όχι'}</b> &middot;
+                Η γραμμή 1 μοιάζει με path: <b>${firstRowIsPath ? 'Ναι' : 'Όχι'}</b> &middot;
+                Παραλείπεται η 1η γραμμή: <b>${skipFirst ? 'Ναι' : 'Όχι'}</b>
+              </p>
               <div style="max-height:460px;overflow-y:auto;border:1px solid var(--border);border-radius:3px;">
               <table class="episodes"><thead><tr>
               <th>#</th>`;
