@@ -5710,9 +5710,14 @@ document.addEventListener(
 
       }
 
-      if(editorCtx.mode !== 'week' && googleAccessToken){
+      if(googleAccessToken){
 
-        const result = await writeBackPlayDate(slotObj, editorCtx.date);
+        const writeDate =
+          editorCtx.mode === 'week'
+            ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(editorCtx.day)])
+            : editorCtx.date;
+
+        const result = await writeBackPlayDate(slotObj, writeDate);
 
         if(result.ok){
           renderShows();
