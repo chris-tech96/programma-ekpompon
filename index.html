@@ -3120,6 +3120,11 @@ function renderShows(){
       'shows-list'
     );
 
+  const openAdvIds = new Set();
+  const openDebugIds = new Set();
+  document.querySelectorAll('.adv.open[id^="adv-"]').forEach(el => openAdvIds.add(el.id.slice(4)));
+  document.querySelectorAll('.adv.open[id^="debug-"]').forEach(el => openDebugIds.add(el.id.slice(6)));
+
   if(!state.shows.length){
 
     list.innerHTML = `
@@ -3464,6 +3469,15 @@ function renderShows(){
         );
 
     });
+
+  openAdvIds.forEach(id => {
+    const el = document.getElementById('adv-'+id);
+    if(el) el.classList.add('open');
+  });
+  openDebugIds.forEach(id => {
+    const el = document.getElementById('debug-'+id);
+    if(el) el.classList.add('open');
+  });
 
 }
 
@@ -4363,6 +4377,14 @@ function renderDateWeekGrid(){
         ${startLabel}
       </span>
 
+      <button
+        class="btn small"
+        data-act="copy-week-forward"
+        data-start="${dateWeekStart}"
+        style="margin-left:auto;">
+        Αντιγραφή αυτής της εβδομάδας στην επόμενη &rarr;
+      </button>
+
     </div>
 
     <div class="week-grid" style="grid-template-columns:repeat(7,1fr);">
@@ -4693,6 +4715,14 @@ function openEditor(ctx){
     );
 
     updateCalc();
+
+    setTimeout(() => {
+      const searchInput = document.getElementById('sp-search');
+      if(searchInput){
+        searchInput.focus();
+        searchInput.select();
+      }
+    }, 50);
 
   }
 
@@ -5121,12 +5151,6 @@ document.addEventListener(
           );
 
       });
-
-      if(state.spreadsheet && state.spreadsheet.id){
-        for(const show of state.shows.filter(s => s.source === 'auto')){
-          fetchShow(show);
-        }
-      }
 
       return;
 
@@ -5631,6 +5655,36 @@ document.addEventListener(
         dateWeekStart = null;
 
         renderMonth();
+
+      }
+
+      else if(
+        act === 'copy-week-forward'
+      ){
+
+        const startStr = actEl.dataset.start;
+
+        if(confirm('Αυτό θα αντιγράψει όλες τις 7 μέρες (ώρες, εκπομπές, επεισόδια) στην επόμενη εβδομάδα, αντικαθιστώντας ό,τι έχει ήδη εκεί. Συνέχεια;')){
+
+          for(let i=0; i<7; i++){
+
+            const sourceDate = addDaysToDate(startStr, i);
+            const targetDate = addDaysToDate(startStr, i + 7);
+
+            const sourceSlots = getEffectiveDaySlots(sourceDate);
+
+            const entry = ensureMonthEntryForDate(targetDate);
+            entry.overrides[targetDate] =
+              sourceSlots.map(s => Object.assign({}, s, {id: uid()}));
+
+          }
+
+          saveState();
+
+          dateWeekStart = addDaysToDate(startStr, 7);
+          renderMonth();
+
+        }
 
       }
 
@@ -7160,11 +7214,19 @@ function startBackgroundSync(){
 
     if(!state.spreadsheet || !state.spreadsheet.id) return;
 
+    // don't disrupt the user mid-edit: skip if the slot editor is open,
+    // or if they're currently typing/focused in any input/textarea/select
+    const overlay = document.getElementById('overlay');
+    if(overlay && overlay.classList.contains('open')) return;
+
+    const active = document.activeElement;
+    if(active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) return;
+
     for(const show of state.shows.filter(s => s.source === 'auto')){
       await fetchShow(show);
     }
 
-  }, 30 * 1000);
+  }, 2 * 60 * 1000);
 
 }
 
