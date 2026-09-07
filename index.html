@@ -1214,13 +1214,11 @@ table.episodes tr:hover td{
         <input
           type="number"
           id="sp-time-h"
-          min="0" max="23"
           style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 10px;color:var(--accent);width:80px;text-align:center;">
         <span style="font-family:var(--font-d);font-size:26px;font-weight:600;color:var(--accent);">:</span>
         <input
           type="number"
           id="sp-time-m"
-          min="0" max="59"
           style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 10px;color:var(--accent);width:80px;text-align:center;">
       </div>
 
@@ -4676,6 +4674,9 @@ function suggestNextTime(ctx){
 
 let editorCtx = null;
 let episodeSort = 'default';
+let episodeSortByShow = {};
+let episodeFilterByShow = {};
+let lastViewedEpisodeByShow = {};
 
 function sortEpisodes(eps, mode){
   const arr = eps.slice();
@@ -4809,8 +4810,16 @@ function openEditor(ctx){
     showSel.value =
       existing.showId;
 
+    const rememberedFilter = episodeFilterByShow[existing.showId] || '';
+    document.getElementById('sp-search').value = rememberedFilter;
+
+    episodeSort = episodeSortByShow[existing.showId] || 'default';
+    const sortSelExisting = document.getElementById('sp-sort');
+    if(sortSelExisting) sortSelExisting.value = episodeSort;
+
     renderEpisodePicker(
-      existing.showId
+      existing.showId,
+      rememberedFilter
     );
 
     updateCalc();
@@ -4974,6 +4983,20 @@ function renderEpisodePicker(
         Καμία αντιστοιχία
       </div>
     `;
+
+  const targetTitle =
+    (editorCtx.selected && editorCtx.selected.showId === showId && editorCtx.selected.episodeTitle) ||
+    lastViewedEpisodeByShow[showId] ||
+    null;
+
+  if(targetTitle){
+    const targetEl = Array.from(box.querySelectorAll('.episode-opt')).find(
+      el => el.dataset.title === targetTitle
+    );
+    if(targetEl){
+      targetEl.scrollIntoView({ block:'center' });
+    }
+  }
 
 }
 
@@ -5949,6 +5972,8 @@ document.addEventListener(
 
       };
 
+      lastViewedEpisodeByShow[showId] = opt.dataset.title;
+
       renderEpisodePicker(
         showId,
         document.getElementById(
@@ -6560,6 +6585,8 @@ document.addEventListener(
 
       if(showId){
 
+        episodeFilterByShow[showId] = e.target.value;
+
         renderEpisodePicker(
           showId,
           e.target.value
@@ -6590,8 +6617,16 @@ document.addEventListener(
 
       if(isNaN(h)) h = 0;
       if(isNaN(m)) m = 0;
-      h = Math.max(0, Math.min(23, h));
-      m = Math.max(0, Math.min(59, m));
+
+      // wrap minutes around, carrying into the hour
+      if(m > 59){ m = 0; h += 1; }
+      if(m < 0){ m = 59; h -= 1; }
+
+      // wrap hours around 0–23
+      h = ((h % 24) + 24) % 24;
+
+      hEl.value = h;
+      mEl.value = m;
 
       document.getElementById('sp-time').value =
         String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
@@ -6663,13 +6698,19 @@ document.addEventListener(
 
       editorCtx.selected = null;
 
+      const rememberedFilter = episodeFilterByShow[e.target.value] || '';
+
       document.getElementById(
         'sp-search'
-      ).value = '';
+      ).value = rememberedFilter;
+
+      episodeSort = episodeSortByShow[e.target.value] || 'default';
+      const sortSelSwitch = document.getElementById('sp-sort');
+      if(sortSelSwitch) sortSelSwitch.value = episodeSort;
 
       renderEpisodePicker(
         e.target.value,
-        ''
+        rememberedFilter
       );
 
       updateCalc();
@@ -6686,6 +6727,8 @@ document.addEventListener(
         document.getElementById('sp-show').value;
 
       if(showId){
+
+        episodeSortByShow[showId] = episodeSort;
 
         renderEpisodePicker(
           showId,
@@ -7177,6 +7220,46 @@ function exportWord(mode){
       `;
 
     });
+
+    const weekDatesForDoc = getCurrentWeekDates();
+    const nextMondayStrDoc = dateToISO(weekDatesForDoc[7]);
+    const nextMondaySlotsDoc = ensureIndependentDay(nextMondayStrDoc).slice().sort((a,b)=>broadcastMinutes(a.time)-broadcastMinutes(b.time));
+    const nextMondayLabelDoc = weekDatesForDoc[7].toLocaleDateString('el-GR');
+
+    body += `
+
+      <h3 style="font-family:Calibri,Arial,sans-serif;color:#fff;background:#2a2d33;padding:6px 12px;margin:0 0 6px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;">
+        Δευτέρα (επόμ.) — ${nextMondayLabelDoc}
+      </h3>
+
+      <table
+        border="0"
+        cellspacing="0"
+        cellpadding="7"
+        style="
+          border-collapse:collapse;
+          width:100%;
+          font-family:Calibri,Arial,sans-serif;
+          font-size:12px;
+          margin-bottom:6px;">
+
+        <tr style="background:#2a2d33;">
+          <th align="left" style="color:#fff;font-weight:600;">Ώρα</th>
+          <th align="left" style="color:#fff;font-weight:600;">Επεισόδιο</th>
+          <th align="left" style="color:#fff;font-weight:600;">Εκπομπή</th>
+        </tr>
+
+        ${
+          nextMondaySlotsDoc.length
+            ? nextMondaySlotsDoc.map((s,i)=>buildWordRow(s,i)).join('')
+            : `<tr><td colspan="3">Καμία ζώνη</td></tr>`
+        }
+
+      </table>
+
+      <br/>
+
+    `;
 
   }else{
 
