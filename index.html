@@ -3271,13 +3271,6 @@ function renderShows(){
                 Εμφάνιση path αυτής της εκπομπής στο PDF/Word
               </label>
 
-              <textarea
-                data-act="show-notes"
-                data-id="${show.id}"
-                placeholder="Σχόλια για αυτή την εκπομπή (εμφανίζονται και στο PDF/Word)..."
-                rows="2"
-                style="margin-top:8px;font-family:var(--font-b);font-size:12.5px;resize:vertical;">${escapeHtml(show.notes || '')}</textarea>
-
             </div>
 
             <div class="show-actions">
@@ -3770,6 +3763,12 @@ function renderWeek(){
               ${escapeHtml(s.episodeTitle)}
             </div>
 
+            <span
+              title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
+              style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
+              &#9998;
+            </span>
+
           </div>
 
         `).join('')
@@ -3881,6 +3880,12 @@ function slotHtml(s){
       <div class="e">
         ${escapeHtml(s.episodeTitle)}
       </div>
+
+      <span
+        title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
+        style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
+        &#9998;
+      </span>
 
     </div>
 
@@ -4275,6 +4280,12 @@ function renderMonth(){
 
                 </div>
 
+                <span
+                  title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
+                  style="font-size:12px;opacity:${s.comment?'1':'.35'};margin-left:4px;flex-shrink:0;">
+                  &#9998;
+                </span>
+
                 <button
                   data-act="quick-delete-day"
                   data-date="${dateStr}"
@@ -4500,6 +4511,12 @@ function renderDateWeekGrid(){
               <div class="e">
                 ${escapeHtml(s.episodeTitle)}
               </div>
+
+              <span
+                title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
+                style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
+                &#9998;
+              </span>
 
             </div>
 
