@@ -2735,6 +2735,16 @@ async function writeBackPlayDate(slot, dateISO){
     if(foundRowIdx === -1) return { ok:false, reason:'title-not-found' };
 
     const row = values[foundRowIdx];
+    const dateStr = formatDateForSheet(dateISO);
+
+    // don't add a duplicate if this exact date is already recorded somewhere in this row
+    for(let c = dateStart; c < row.length; c++){
+      const existing = (row[c] || '').trim().replace(/[,;]+$/,'');
+      if(existing === dateStr){
+        await fetchShow(show);
+        return { ok:true, reason:'already-present' };
+      }
+    }
 
     let targetCol = -1;
     for(let c = dateStart; c < dateStart + 60; c++){
@@ -2745,7 +2755,6 @@ async function writeBackPlayDate(slot, dateISO){
     }
     if(targetCol === -1) targetCol = Math.max(row.length, dateStart);
 
-    const dateStr = formatDateForSheet(dateISO);
     const colLetter = columnNumberToLetter(targetCol + 1);
     const sheetRow = foundRowIdx + 1;
     const writeRange = `'${safeSheetName}'!${colLetter}${sheetRow}`;
