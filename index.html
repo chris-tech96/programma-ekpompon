@@ -1208,12 +1208,23 @@ table.episodes tr:hover td{
 
     <div class="field">
 
-      <label>Ώρα έναρξης</label>
+      <label>Ώρα έναρξης (24ωρο)</label>
 
-      <input
-        type="time"
-        id="sp-time"
-        style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 14px;color:var(--accent);letter-spacing:1px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input
+          type="number"
+          id="sp-time-h"
+          min="0" max="23"
+          style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 10px;color:var(--accent);width:80px;text-align:center;">
+        <span style="font-family:var(--font-d);font-size:26px;font-weight:600;color:var(--accent);">:</span>
+        <input
+          type="number"
+          id="sp-time-m"
+          min="0" max="59"
+          style="font-family:var(--font-d);font-size:26px;font-weight:600;padding:12px 10px;color:var(--accent);width:80px;text-align:center;">
+      </div>
+
+      <input type="hidden" id="sp-time">
 
     </div>
 
@@ -4725,12 +4736,18 @@ function openEditor(ctx){
       ? 'Επεξεργασία ζώνης'
       : 'Νέα ζώνη';
 
-  document.getElementById(
-    'sp-time'
-  ).value =
-    existing
-      ? existing.time
-      : suggestNextTime(ctx);
+  {
+    const initTime =
+      existing
+        ? existing.time
+        : suggestNextTime(ctx);
+
+    document.getElementById('sp-time').value = initTime;
+
+    const [initH, initM] = initTime.split(':');
+    document.getElementById('sp-time-h').value = parseInt(initH, 10);
+    document.getElementById('sp-time-m').value = parseInt(initM, 10);
+  }
 
   editorCtx.selected =
     existing
@@ -6512,6 +6529,29 @@ document.addEventListener(
     if(
       e.target.id === 'sp-time'
     ){
+
+      updateCalc();
+
+    }
+
+    if(
+      e.target.id === 'sp-time-h' ||
+      e.target.id === 'sp-time-m'
+    ){
+
+      const hEl = document.getElementById('sp-time-h');
+      const mEl = document.getElementById('sp-time-m');
+
+      let h = parseInt(hEl.value, 10);
+      let m = parseInt(mEl.value, 10);
+
+      if(isNaN(h)) h = 0;
+      if(isNaN(m)) m = 0;
+      h = Math.max(0, Math.min(23, h));
+      m = Math.max(0, Math.min(59, m));
+
+      document.getElementById('sp-time').value =
+        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 
       updateCalc();
 
