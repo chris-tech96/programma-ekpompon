@@ -791,6 +791,14 @@ table.episodes tr:hover td{
     color:#555;
     word-break:break-all;
   }
+
+  .p-note-inline{
+    display:block;
+    margin:2px 0 2px 102px;
+    font-family:'Work Sans',Arial,sans-serif;
+    font-size:11px;
+    color:#8a6d1f;
+  }
 }
 
 /* ACCESS GATE */
@@ -1255,6 +1263,11 @@ table.episodes tr:hover td{
 
     <div class="calc-end" id="sp-calc">
       Επίλεξε επεισόδιο για να δεις την ώρα λήξης.
+    </div>
+
+    <div class="field">
+      <label>Σχόλιο <span style="color:var(--text-faint)">(προαιρετικό — εμφανίζεται στο PDF/Word)</span></label>
+      <input type="text" id="sp-comment" placeholder="π.χ. Ζωντανά, Επανάληψη, Ειδικό επεισόδιο...">
     </div>
 
     <div class="panel-actions">
@@ -3258,6 +3271,13 @@ function renderShows(){
                 Εμφάνιση path αυτής της εκπομπής στο PDF/Word
               </label>
 
+              <textarea
+                data-act="show-notes"
+                data-id="${show.id}"
+                placeholder="Σχόλια για αυτή την εκπομπή (εμφανίζονται και στο PDF/Word)..."
+                rows="2"
+                style="margin-top:8px;font-family:var(--font-b);font-size:12.5px;resize:vertical;">${escapeHtml(show.notes || '')}</textarea>
+
             </div>
 
             <div class="show-actions">
@@ -4654,6 +4674,8 @@ function openEditor(ctx){
   ).textContent =
     'Επίλεξε επεισόδιο για να δεις την ώρα λήξης.';
 
+  document.getElementById('sp-comment').value = '';
+
   document.getElementById(
     'sp-delete'
   ).style.display =
@@ -4715,6 +4737,8 @@ function openEditor(ctx){
     );
 
     updateCalc();
+
+    document.getElementById('sp-comment').value = existing.comment || '';
 
     setTimeout(() => {
       const searchInput = document.getElementById('sp-search');
@@ -5928,6 +5952,9 @@ document.addEventListener(
         dataRowIdx:
           editorCtx.selected.dataRowIdx ?? null,
 
+        comment:
+          document.getElementById('sp-comment').value.trim() || null,
+
         writtenBack: false
 
       };
@@ -6590,6 +6617,24 @@ document.addEventListener(
 
     }
 
+    if(
+      e.target.dataset && e.target.dataset.act === 'show-notes'
+    ){
+
+      const show =
+        state.shows.find(
+          s => s.id === e.target.dataset.id
+        );
+
+      if(show){
+
+        show.notes = e.target.value;
+        saveState();
+
+      }
+
+    }
+
   }
 );
 
@@ -6609,6 +6654,11 @@ function effectiveSourcePath(s){
 function showWantsPath(showId){
   const show = state.shows.find(s => s.id === showId);
   return !show || show.showPath !== false;
+}
+
+function getShowNotes(showId){
+  const show = state.shows.find(s => s.id === showId);
+  return (show && show.notes && show.notes.trim()) ? show.notes.trim() : null;
 }
 
 function buildPrintRow(s){
@@ -6636,10 +6686,27 @@ function buildPrintRow(s){
 
     html += `
       <div class="p-path-inline">
-        ${escapeHtml(effectiveSourcePath(s))}
+        ${effectiveSourcePath(s) ? escapeHtml(effectiveSourcePath(s)) : ''}
       </div>
     `;
 
+  }
+
+  const notes = getShowNotes(s.showId);
+  if(notes){
+    html += `
+      <div class="p-note-inline">
+        ${escapeHtml(notes)}
+      </div>
+    `;
+  }
+
+  if(s.comment){
+    html += `
+      <div class="p-note-inline" style="font-style:italic;">
+        ${escapeHtml(s.comment)}
+      </div>
+    `;
   }
 
   html += `</div>`;
@@ -6898,6 +6965,16 @@ function buildWordRow(s, i){
         ${
           (showWantsPath(s.showId) && effectiveSourcePath(s))
             ? `<br/><span style="background:#fbf6ec;border-left:3px solid #e8a33d;padding:2px 8px;font-weight:700;font-size:10.5px;color:#555;display:inline-block;margin-top:4px;">${escapeHtml(effectiveSourcePath(s))}</span>`
+            : ''
+        }
+        ${
+          getShowNotes(s.showId)
+            ? `<br/><span style="font-size:10.5px;color:#8a6d1f;">${escapeHtml(getShowNotes(s.showId))}</span>`
+            : ''
+        }
+        ${
+          s.comment
+            ? `<br/><span style="font-size:10.5px;color:#8a6d1f;font-style:italic;">${escapeHtml(s.comment)}</span>`
             : ''
         }
       </td>
