@@ -2786,10 +2786,37 @@ async function writeBackPlayDate(slot, dateISO){
 
 }
 
+function episodeStillScheduledOnDate(showId, episodeTitle, dateISO){
+
+  const title = (episodeTitle || '').trim();
+  const weekDates = getCurrentWeekDates();
+
+  for(let i=0; i<7; i++){
+    if(dateToISO(weekDates[i]) === dateISO){
+      const day = DAYS[i];
+      if((state.weekly[day]||[]).some(s => s.showId === showId && (s.episodeTitle||'').trim() === title)){
+        return true;
+      }
+    }
+  }
+
+  const entry = ensureMonthEntryForDate(dateISO);
+  if((entry.overrides[dateISO]||[]).some(s => s.showId === showId && (s.episodeTitle||'').trim() === title)){
+    return true;
+  }
+
+  return false;
+
+}
+
 async function clearBackPlayDate(slot, dateISO){
 
   if(!googleAccessToken) return { ok:false, reason:'no-auth' };
   if(!state.spreadsheet || !state.spreadsheet.id) return { ok:false, reason:'no-spreadsheet' };
+
+  if(episodeStillScheduledOnDate(slot.showId, slot.episodeTitle, dateISO)){
+    return { ok:true, reason:'still-scheduled-elsewhere' };
+  }
 
   const show = state.shows.find(s => s.id === slot.showId);
   if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
