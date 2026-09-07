@@ -3118,6 +3118,13 @@ function timeToMin(t){
 
 }
 
+// Broadcast-day sort key: 00:00–07:59 counts as "continuing" after 23:59,
+// so late-night content sorts at the end of its day, not the start.
+function broadcastMinutes(t){
+  const m = timeToMin(t);
+  return m < 8*60 ? m + 1440 : m;
+}
+
 function minToTime(min){
 
   min =
@@ -3687,8 +3694,8 @@ function renderWeek(){
           .slice()
           .sort(
             (a,b)=>
-              timeToMin(a.time) -
-              timeToMin(b.time)
+              broadcastMinutes(a.time) -
+              broadcastMinutes(b.time)
           );
 
       const body =
@@ -3764,8 +3771,8 @@ function renderWeek(){
       .slice()
       .sort(
         (a,b)=>
-          timeToMin(a.time) -
-          timeToMin(b.time)
+          broadcastMinutes(a.time) -
+          broadcastMinutes(b.time)
       );
 
   const nextMondayBody =
@@ -4248,8 +4255,8 @@ function renderMonth(){
       .slice()
       .sort(
         (a,b)=>
-          timeToMin(a.time) -
-          timeToMin(b.time)
+          broadcastMinutes(a.time) -
+          broadcastMinutes(b.time)
       );
 
     html += `
@@ -4510,8 +4517,8 @@ function renderDateWeekGrid(){
       .slice()
       .sort(
         (a,b)=>
-          timeToMin(a.time) -
-          timeToMin(b.time)
+          broadcastMinutes(a.time) -
+          broadcastMinutes(b.time)
       );
 
     const body =
@@ -4645,7 +4652,7 @@ function suggestNextTime(ctx){
   arr.forEach(s=>{
 
     const endSec =
-      timeToMin(s.time)*60 +
+      broadcastMinutes(s.time)*60 +
       (s.duration || 0);
 
     if(
@@ -6845,8 +6852,8 @@ function printSchedule(mode){
           .slice()
           .sort(
             (a,b)=>
-              timeToMin(a.time) -
-              timeToMin(b.time)
+              broadcastMinutes(a.time) -
+              broadcastMinutes(b.time)
           );
 
       const dLabel = weekDates[di].getDate()+'/'+(weekDates[di].getMonth()+1);
@@ -6884,7 +6891,7 @@ function printSchedule(mode){
     });
 
     const nextMondayStr = dateToISO(weekDates[7]);
-    const nextMondaySlots = ensureIndependentDay(nextMondayStr).slice().sort((a,b)=>timeToMin(a.time)-timeToMin(b.time));
+    const nextMondaySlots = ensureIndependentDay(nextMondayStr).slice().sort((a,b)=>broadcastMinutes(a.time)-broadcastMinutes(b.time));
     const nextMondayLabel = weekDates[7].getDate()+'/'+(weekDates[7].getMonth()+1);
 
     html += `
@@ -6983,8 +6990,8 @@ function printSchedule(mode){
         .slice()
         .sort(
           (a,b)=>
-            timeToMin(a.time) -
-            timeToMin(b.time)
+            broadcastMinutes(a.time) -
+            broadcastMinutes(b.time)
         );
 
       html += `
@@ -7110,8 +7117,8 @@ function exportWord(mode){
           .slice()
           .sort(
             (a,b)=>
-              timeToMin(a.time) -
-              timeToMin(b.time)
+              broadcastMinutes(a.time) -
+              broadcastMinutes(b.time)
           );
 
       body += `
@@ -7237,8 +7244,8 @@ function exportWord(mode){
         .slice()
         .sort(
           (a,b)=>
-            timeToMin(a.time) -
-            timeToMin(b.time)
+            broadcastMinutes(a.time) -
+            broadcastMinutes(b.time)
         );
 
       body += `
