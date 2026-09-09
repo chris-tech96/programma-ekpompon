@@ -356,7 +356,7 @@ table.episodes tr:hover td{
 .timeline-wrap{
   --timeline-cols:7;
   display:grid;
-  grid-template-columns:72px repeat(var(--timeline-cols),minmax(190px,1fr));
+  grid-template-columns:84px repeat(var(--timeline-cols),minmax(230px,1fr));
   width:max-content;
   min-width:100%;
   border:1px solid var(--border-soft);
@@ -368,7 +368,7 @@ table.episodes tr:hover td{
 .timeline-head-spacer,
 .timeline-head-label{
   min-height:46px;
-  padding:10px 12px;
+  padding:12px 14px;
   border-bottom:1px solid var(--border-soft);
   background:var(--panel-2);
 }
@@ -414,7 +414,7 @@ table.episodes tr:hover td{
 }
 
 .timeline-track{
-  --half-hour:34.5px;
+  --half-hour:48px;
   position:relative;
   min-width:0;
   background:
@@ -432,7 +432,7 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  min-height:78px;
+  min-height:108px;
   overflow:hidden;
   z-index:2;
   box-sizing:border-box;
@@ -3936,7 +3936,7 @@ function buildTimelineGrid(columns, kind){
 
   // 30' = ~69px, ώστε η ζώνη να κρατά την ίδια άνετη εμφάνιση
   // που είχε στο αρχικό εβδομαδιαίο πρόγραμμα.
-  const pxPerMinute = 2.45;
+  const pxPerMinute = 3.2;
   const totalMinutes = bounds.end - bounds.start;
   const bodyHeight = totalMinutes * pxPerMinute;
 
