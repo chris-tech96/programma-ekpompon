@@ -432,20 +432,22 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  min-height:68px;
+  min-height:78px;
   overflow:hidden;
   z-index:2;
   box-sizing:border-box;
-  padding:9px 11px;
-  line-height:1.45;
+  padding:10px 12px;
+  line-height:1.48;
 }
 
 .timeline-slot .t,
 .timeline-slot .s,
 .timeline-slot .e{
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 .timeline-slot .t{
@@ -3857,7 +3859,7 @@ function timelineSlotHtml(s, context){
 
   const top = start - context.start;
   const height = Math.max(
-    68,
+    78,
     durationMin * context.pxPerMinute - 4
   );
 
@@ -3934,7 +3936,7 @@ function buildTimelineGrid(columns, kind){
 
   // 30' = ~69px, ώστε η ζώνη να κρατά την ίδια άνετη εμφάνιση
   // που είχε στο αρχικό εβδομαδιαίο πρόγραμμα.
-  const pxPerMinute = 2.30;
+  const pxPerMinute = 2.45;
   const totalMinutes = bounds.end - bounds.start;
   const bodyHeight = totalMinutes * pxPerMinute;
 
@@ -5042,6 +5044,11 @@ function renderEpisodePicker(
   let eps =
     show.episodes;
 
+  const targetTitle =
+    (editorCtx.selected && editorCtx.selected.showId === showId && editorCtx.selected.episodeTitle) ||
+    lastViewedEpisodeByShow[showId] ||
+    null;
+
   if(filter){
 
     eps =
@@ -5054,7 +5061,45 @@ function renderEpisodePicker(
 
   }
 
+  // Όταν κάνουμε αντικατάσταση, το ήδη επιλεγμένο επεισόδιο
+  // πρέπει να παραμένει ορατό ακόμη κι αν το παλιό φίλτρο
+  // δεν ταιριάζει πλέον στον τίτλο του.
+  if(targetTitle && !eps.some(e => e.title === targetTitle)){
+
+    const selectedEpisode =
+      show.episodes.find(
+        e => e.title === targetTitle
+      );
+
+    if(selectedEpisode)
+      eps = [selectedEpisode, ...eps];
+
+  }
+
   eps = sortEpisodes(eps, episodeSort);
+
+  // Κράτα πάντα το επιλεγμένο επεισόδιο μέσα στα πρώτα αποτελέσματα.
+  if(targetTitle){
+
+    const selectedIndex =
+      eps.findIndex(
+        e => e.title === targetTitle
+      );
+
+    if(selectedIndex >= 150){
+
+      const selectedEpisode = eps[selectedIndex];
+
+      eps = [
+        selectedEpisode,
+        ...eps.filter(
+          e => e.title !== targetTitle
+        )
+      ];
+
+    }
+
+  }
 
   eps =
     eps.slice(0,150);
@@ -5144,11 +5189,6 @@ function renderEpisodePicker(
         Καμία αντιστοιχία
       </div>
     `;
-
-  const targetTitle =
-    (editorCtx.selected && editorCtx.selected.showId === showId && editorCtx.selected.episodeTitle) ||
-    lastViewedEpisodeByShow[showId] ||
-    null;
 
   if(targetTitle){
     const targetEl = Array.from(box.querySelectorAll('.episode-opt')).find(
