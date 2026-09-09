@@ -6061,6 +6061,16 @@ document.addEventListener(
 
       };
 
+      let previousSlot = null;
+
+      if(editorCtx.slotId){
+        const prevArr =
+          editorCtx.mode === 'week'
+            ? (state.weekly[editorCtx.day] || [])
+            : getEffectiveDaySlots(editorCtx.date);
+        previousSlot = prevArr.find(s => s.id === editorCtx.slotId) || null;
+      }
+
       if(
         editorCtx.mode === 'week'
       ){
@@ -6135,6 +6145,18 @@ document.addEventListener(
           editorCtx.mode === 'week'
             ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(editorCtx.day)])
             : editorCtx.date;
+
+        // if this edit replaced a different episode, clear that old episode's
+        // date from the sheet (unless it's still scheduled elsewhere)
+        if(
+          previousSlot &&
+          (
+            previousSlot.showId !== slotObj.showId ||
+            (previousSlot.episodeTitle||'').trim() !== (slotObj.episodeTitle||'').trim()
+          )
+        ){
+          await clearBackPlayDate(previousSlot, writeDate);
+        }
 
         const result = await writeBackPlayDate(slotObj, writeDate);
 
