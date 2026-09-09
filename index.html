@@ -3890,6 +3890,7 @@ function timelineSlotHtml(s, context){
       data-act="${editAction}"
       ${extraAttrs}
       title="${fullTitle}"
+      data-target-height="${height}"
       style="
         top:${top * context.pxPerMinute}px;
         height:${height}px;
@@ -4029,12 +4030,17 @@ function autoFitTimelineText(container){
 
   scope.querySelectorAll('.timeline-slot').forEach(slotEl => {
 
-    // reset before measuring, in case of re-renders
-    slotEl.style.height = '';
+    const targetHeight =
+      parseFloat(slotEl.dataset.targetHeight) ||
+      slotEl.getBoundingClientRect().height;
+
+    // reset font sizes, then pin the box to its intended (time-proportional)
+    // height so we measure against the REAL constraint, not an auto-sized box
     ['.t','.s','.e'].forEach(sel => {
       const el = slotEl.querySelector(sel);
       if(el) el.style.fontSize = '';
     });
+    slotEl.style.height = targetHeight + 'px';
 
     const minSize = 8.5;
     let guard = 0;
