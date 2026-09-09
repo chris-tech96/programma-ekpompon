@@ -351,6 +351,124 @@ table.episodes tr:hover td{
   font-variant-numeric:tabular-nums;
 }
 
+
+/* REAL TIME GRID */
+.timeline-wrap{
+  --timeline-cols:7;
+  display:grid;
+  grid-template-columns:72px repeat(var(--timeline-cols),minmax(190px,1fr));
+  width:max-content;
+  min-width:100%;
+  border:1px solid var(--border-soft);
+  border-radius:4px;
+  overflow:hidden;
+  background:var(--panel-2);
+}
+
+.timeline-head-spacer,
+.timeline-head-label{
+  min-height:46px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border-soft);
+  background:var(--panel-2);
+}
+
+.timeline-head-spacer{
+  border-right:1px solid var(--border-soft);
+}
+
+.timeline-head-label{
+  font-family:var(--font-d);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.3px;
+  border-left:1px solid var(--border-soft);
+  white-space:nowrap;
+}
+
+.timeline-axis{
+  position:relative;
+  background:var(--panel-2);
+  border-right:1px solid var(--border-soft);
+}
+
+.timeline-axis-label{
+  position:absolute;
+  right:8px;
+  transform:translateY(-50%);
+  color:var(--text-dim);
+  font-family:var(--font-d);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+.timeline-day{
+  min-width:0;
+  background:var(--panel-2);
+  border-left:1px solid var(--border-soft);
+}
+
+.timeline-day .day-head{
+  display:none;
+}
+
+.timeline-track{
+  --half-hour:34.5px;
+  position:relative;
+  min-width:0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--half-hour) - 1px),
+      var(--border-soft) calc(var(--half-hour) - 1px),
+      var(--border-soft) var(--half-hour)
+    );
+}
+
+.timeline-slot{
+  position:absolute !important;
+  left:6px;
+  right:6px;
+  margin:0;
+  overflow:hidden;
+  min-height:34px;
+  z-index:2;
+}
+
+.timeline-slot:hover{
+  z-index:3;
+}
+
+.timeline-empty{
+  position:absolute;
+  top:10px;
+  left:0;
+  right:0;
+}
+
+.timeline-add{
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:8px;
+  margin:0;
+  z-index:4;
+  background:rgba(28,31,36,.92);
+}
+
+#week-grid{
+  overflow-x:auto;
+}
+
+@media (max-width:900px){
+  .timeline-wrap{
+    grid-template-columns:60px repeat(var(--timeline-cols),minmax(170px,1fr));
+  }
+}
+
+
 /* WEEK */
 
 .week-grid{
@@ -3664,6 +3782,198 @@ function getCurrentWeekDates(){
 
 }
 
+
+function timelineBounds(daySlots){
+  const all = daySlots.flatMap(slots => slots || []);
+  if(!all.length){
+    return {start:8*60, end:18*60};
+  }
+
+  let start = Infinity;
+  let end = -Infinity;
+
+  all.forEach(s=>{
+    const top = broadcastMinutes(s.time);
+    const dur = Math.max(1, Math.round((s.duration || 0) / 60));
+    start = Math.min(start, top);
+    end = Math.max(end, top + dur);
+  });
+
+  start = Math.floor(start / 30) * 30;
+  end = Math.ceil(end / 30) * 30;
+
+  if(end <= start) end = start + 60;
+
+  // Keep a little breathing room while preserving the real half-hour grid.
+  start = Math.max(0, start - 30);
+  end = Math.min(32*60, end + 30);
+
+  return {start, end};
+}
+
+function timelineSlotHtml(s, context){
+  const start = broadcastMinutes(s.time);
+  const durationMin = Math.max(
+    18,
+    Math.round((s.duration || 0) / 60)
+  );
+
+  const top = start - context.start;
+  const height = Math.max(
+    34,
+    durationMin * context.pxPerMinute - 4
+  );
+
+  const end = addDuration(s.time, s.duration || 0);
+  const deleteAction =
+    context.kind === 'week'
+      ? 'quick-delete-week'
+      : 'quick-delete-day';
+
+  const extraAttrs =
+    context.kind === 'week'
+      ? `data-slot="${s.id}"`
+      : `data-date="${context.date}" data-slot="${s.id}"`;
+
+  const editAction =
+    context.kind === 'week'
+      ? 'edit-slot'
+      : 'edit-day-slot';
+
+  return `
+    <div
+      class="timeline-slot slot"
+      data-act="${editAction}"
+      ${extraAttrs}
+      style="
+        top:${top * context.pxPerMinute}px;
+        height:${height}px;
+        border-left-color:${getShowColor(s.showId)};">
+
+      <button
+        data-act="${deleteAction}"
+        ${extraAttrs}
+        title="Διαγραφή"
+        style="
+          position:absolute;
+          top:3px;
+          right:3px;
+          background:transparent;
+          border:none;
+          color:var(--text-faint);
+          font-size:15px;
+          line-height:1;
+          cursor:pointer;
+          padding:2px 6px;">
+        &times;
+      </button>
+
+      <div class="t">
+        ${s.time}&ndash;${end}
+      </div>
+
+      <div class="s">
+        ${escapeHtml(s.showName)}
+      </div>
+
+      <div class="e">
+        ${escapeHtml(s.episodeTitle)}
+      </div>
+
+      <span
+        title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
+        style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
+        &#9998;
+      </span>
+    </div>
+  `;
+}
+
+function buildTimelineGrid(columns, kind){
+  const bounds =
+    timelineBounds(
+      columns.map(c => c.slots)
+    );
+
+  const pxPerMinute = 1.15;
+  const totalMinutes = bounds.end - bounds.start;
+  const bodyHeight = totalMinutes * pxPerMinute;
+
+  const rows = [];
+  for(let min=bounds.start; min<=bounds.end; min+=30){
+    const top = (min - bounds.start) * pxPerMinute;
+    rows.push(`
+      <div
+        class="timeline-axis-label"
+        style="top:${top}px;">
+        ${minToTime(min)}
+      </div>
+    `);
+  }
+
+  const daysHtml = columns.map(col=>{
+    const slots = (col.slots || [])
+      .slice()
+      .sort(
+        (a,b)=>
+          broadcastMinutes(a.time) -
+          broadcastMinutes(b.time)
+      );
+
+    const slotContext = {
+      kind,
+      date: col.date || null,
+      start: bounds.start,
+      pxPerMinute
+    };
+
+    const body =
+      slots.length
+        ? slots.map(s=>timelineSlotHtml(s, slotContext)).join('')
+        : `<div class="empty-note timeline-empty">Καμία ζώνη</div>`;
+
+    return `
+      <div class="timeline-day">
+        <div class="day-head">
+          <span class="name">
+            ${col.label}
+          </span>
+          ${col.copyButton || ''}
+        </div>
+
+        <div
+          class="timeline-track"
+          style="height:${bodyHeight}px;">
+          ${body}
+          ${col.addButton || ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div
+      class="timeline-wrap"
+      style="--timeline-cols:${columns.length};">
+      <div class="timeline-head-spacer"></div>
+      ${columns.map(col=>`
+        <div class="timeline-head-label">
+          ${col.shortLabel || col.label}
+        </div>
+      `).join('')}
+
+      <div
+        class="timeline-axis"
+        style="height:${bodyHeight}px;">
+        ${rows.join('')}
+      </div>
+
+      ${daysHtml}
+    </div>
+  `;
+}
+
+
 function renderWeek(){
 
   const grid =
@@ -3695,203 +4005,91 @@ function renderWeek(){
 
   }
 
-  const weekCols =
+  const columns =
     DAYS.map((day,i)=>{
-
-      const slots =
-        (state.weekly[day]||[])
-          .slice()
-          .sort(
-            (a,b)=>
-              broadcastMinutes(a.time) -
-              broadcastMinutes(b.time)
-          );
-
-      const body =
-        slots.length
-          ? slots
-              .map(
-                s=>slotHtml(s)
-              )
-              .join('')
-          : `
-              <div class="empty-note">
-                Καμία ζώνη
-              </div>
-            `;
 
       const dLabel =
         weekDates[i].getDate() +
         '/' +
         (weekDates[i].getMonth()+1);
 
-      return `
-
-        <div class="day-col">
-
-          <div class="day-head">
-
-            <span class="name">
-
-              ${day}
-
-              <span
-                style="
-                  color:var(--text-dim);
-                  font-weight:400;
-                  font-size:12px;">
-                ${dLabel}
-              </span>
-
-            </span>
-
-            <button
-              class="btn ghost small"
-              data-act="copy-day"
-              data-day="${day}"
-              title="Αντιγραφή ημέρας"
-              style="font-size:16px;padding:4px 8px;">
-              &#10697;
-            </button>
-
-          </div>
-
-          <div class="day-body">
-
-            ${body}
-
-            <button
-              class="add-slot-btn"
-              data-act="add-week"
-              data-day="${day}">
-              + Προσθήκη ζώνης
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }).join('');
+      return {
+        label: `
+          ${day}
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;">
+            ${dLabel}
+          </span>
+        `,
+        shortLabel: `
+          ${day}
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;">
+            ${dLabel}
+          </span>
+        `,
+        slots: state.weekly[day] || [],
+        copyButton: `
+          <button
+            class="btn ghost small"
+            data-act="copy-day"
+            data-day="${day}"
+            title="Αντιγραφή ημέρας"
+            style="font-size:16px;padding:4px 8px;">
+            &#10697;
+          </button>
+        `,
+        addButton: `
+          <button
+            class="add-slot-btn timeline-add"
+            data-act="add-week"
+            data-day="${day}">
+            + Προσθήκη ζώνης
+          </button>
+        `
+      };
+    });
 
   const nextMondaySlots =
-    ensureIndependentDay(nextMondayStr)
-      .slice()
-      .sort(
-        (a,b)=>
-          broadcastMinutes(a.time) -
-          broadcastMinutes(b.time)
-      );
+    ensureIndependentDay(nextMondayStr);
 
-  const nextMondayBody =
-    nextMondaySlots.length
-      ? nextMondaySlots.map(s=>`
+  columns.push({
+    label: `
+      Δευτέρα (επόμ.)
+      <span style="color:var(--text-dim);font-weight:400;font-size:12px;">
+        ${weekDates[7].getDate()}/${weekDates[7].getMonth()+1}
+      </span>
+    `,
+    shortLabel: `
+      Δευτέρα (επόμ.)
+      <span style="color:var(--text-dim);font-weight:400;font-size:12px;">
+        ${weekDates[7].getDate()}/${weekDates[7].getMonth()+1}
+      </span>
+    `,
+    slots: nextMondaySlots,
+    date: nextMondayStr,
+    copyButton: `
+      <button
+        class="btn ghost small"
+        data-act="copy-date-day"
+        data-date="${nextMondayStr}"
+        title="Αντιγραφή ημέρας"
+        style="font-size:16px;padding:4px 8px;">
+        &#10697;
+      </button>
+    `,
+    addButton: `
+      <button
+        class="add-slot-btn timeline-add"
+        data-act="add-day-slot"
+        data-date="${nextMondayStr}">
+        + Προσθήκη ζώνης
+      </button>
+    `
+  });
 
-          <div
-            class="slot"
-            data-act="edit-day-slot"
-            data-date="${nextMondayStr}"
-            data-slot="${s.id}"
-            style="position:relative;border-left-color:${getShowColor(s.showId)};">
-
-            <button
-              data-act="quick-delete-day"
-              data-date="${nextMondayStr}"
-              data-slot="${s.id}"
-              title="Διαγραφή"
-              style="
-                position:absolute;
-                top:3px;
-                right:3px;
-                background:transparent;
-                border:none;
-                color:var(--text-faint);
-                font-size:15px;
-                line-height:1;
-                cursor:pointer;
-                padding:2px 6px;">
-              &times;
-            </button>
-
-            <div class="t">
-              ${s.time}&ndash;${addDuration(s.time, s.duration||0)}
-            </div>
-
-            <div class="s">
-              ${escapeHtml(s.showName)}
-            </div>
-
-            <div class="e">
-              ${escapeHtml(s.episodeTitle)}
-            </div>
-
-            <span
-              title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
-              style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
-              &#9998;
-            </span>
-
-          </div>
-
-        `).join('')
-      : `
-          <div class="empty-note">
-            Καμία ζώνη
-          </div>
-        `;
-
-  const nextMondayCol = `
-
-    <div class="day-col">
-
-      <div class="day-head">
-
-        <span class="name">
-
-          Δευτέρα (επόμ.)
-
-          <span
-            style="
-              color:var(--text-dim);
-              font-weight:400;
-              font-size:12px;">
-            ${weekDates[7].getDate()}/${weekDates[7].getMonth()+1}
-          </span>
-
-        </span>
-
-        <button
-          class="btn ghost small"
-          data-act="copy-date-day"
-          data-date="${nextMondayStr}"
-          title="Αντιγραφή ημέρας"
-          style="font-size:16px;padding:4px 8px;">
-          &#10697;
-        </button>
-
-      </div>
-
-      <div class="day-body">
-
-        ${nextMondayBody}
-
-        <button
-          class="add-slot-btn"
-          data-act="add-day-slot"
-          data-date="${nextMondayStr}">
-          + Προσθήκη ζώνης
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-  grid.innerHTML = weekCols + nextMondayCol;
-
+  grid.innerHTML =
+    buildTimelineGrid(columns, 'week');
 }
+
 
 function getShowColor(showId){
   const show = state.shows.find(s => s.id === showId);
@@ -4448,7 +4646,6 @@ function renderDateWeekGrid(){
     );
 
   let html = `
-
     <div
       style="
         display:flex;
@@ -4480,9 +4677,9 @@ function renderDateWeekGrid(){
       </button>
 
     </div>
-
-    <div class="week-grid" style="grid-template-columns:repeat(7,1fr);">
   `;
+
+  const columns = [];
 
   for(let i=0;i<7;i++){
 
@@ -4519,120 +4716,29 @@ function renderDateWeekGrid(){
       '/' +
       m;
 
-    const slots =
-      getEffectiveDaySlots(
-        dateStr
-      )
-      .slice()
-      .sort(
-        (a,b)=>
-          broadcastMinutes(a.time) -
-          broadcastMinutes(b.time)
-      );
-
-    const body =
-      slots.length
-        ? slots.map(s=>`
-
-            <div
-              class="slot"
-              data-act="edit-day-slot"
-              data-date="${dateStr}"
-              data-slot="${s.id}"
-              style="position:relative;border-left-color:${getShowColor(s.showId)};">
-
-              <button
-                data-act="quick-delete-day"
-                data-date="${dateStr}"
-                data-slot="${s.id}"
-                title="Διαγραφή"
-                style="
-                  position:absolute;
-                  top:3px;
-                  right:3px;
-                  background:transparent;
-                  border:none;
-                  color:var(--text-faint);
-                  font-size:15px;
-                  cursor:pointer;
-                  padding:2px 6px;">
-                &times;
-              </button>
-
-              <div class="t">
-                ${s.time}&ndash;
-                ${addDuration(
-                  s.time,
-                  s.duration||0
-                )}
-              </div>
-
-              <div class="s">
-                ${escapeHtml(s.showName)}
-              </div>
-
-              <div class="e">
-                ${escapeHtml(s.episodeTitle)}
-              </div>
-
-              <span
-                title="${s.comment ? 'Σχόλιο: '+escapeHtml(s.comment) : 'Προσθήκη σχολίου'}"
-                style="position:absolute;bottom:3px;right:5px;font-size:12px;opacity:${s.comment?'1':'.35'};pointer-events:none;">
-                &#9998;
-              </span>
-
-            </div>
-
-          `).join('')
-
-        : `
-          <div class="empty-note">
-            Καμία ζώνη
-          </div>
-        `;
-
-    html += `
-
-      <div class="day-col">
-
-        <div class="day-head">
-
-          <span class="name">
-            ${label}
-          </span>
-
-        </div>
-
-        <div class="day-body">
-
-          ${body}
-
-          <button
-            class="add-slot-btn"
-            data-act="add-day-slot"
-            data-date="${dateStr}">
-            + Προσθήκη ζώνης
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
+    columns.push({
+      label,
+      shortLabel: label,
+      slots: getEffectiveDaySlots(dateStr),
+      date: dateStr,
+      addButton: `
+        <button
+          class="add-slot-btn timeline-add"
+          data-act="add-day-slot"
+          data-date="${dateStr}">
+          + Προσθήκη ζώνης
+        </button>
+      `
+    });
   }
 
-  html += `
-    </div>
-  `;
+  html += buildTimelineGrid(columns, 'date-week');
 
   document.getElementById(
     'month-list'
   ).innerHTML = html;
-
 }
 
-/* ================= EDITOR ================= */
 
 function suggestNextTime(ctx){
 
