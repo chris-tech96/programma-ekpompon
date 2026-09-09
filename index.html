@@ -432,9 +432,12 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  overflow:visible;
-  min-height:34px;
+  min-height:68px;
+  overflow:hidden;
   z-index:2;
+  box-sizing:border-box;
+  padding:9px 11px;
+  line-height:1.45;
 }
 
 .timeline-slot .t,
@@ -446,15 +449,26 @@ table.episodes tr:hover td{
 }
 
 .timeline-slot .t{
-  font-size:12px;
+  font-family:var(--font-d);
+  font-variant-numeric:tabular-nums;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.3px;
+  color:var(--accent);
+  margin-bottom:2px;
 }
 
 .timeline-slot .s{
-  font-size:12px;
+  font-size:12.5px;
+  color:var(--text-dim);
+  margin-top:1px;
 }
 
 .timeline-slot .e{
-  font-size:11px;
+  font-size:12.5px;
+  font-weight:500;
+  margin-top:1px;
+  padding-right:15px;
 }
 
 .timeline-slot:hover{
@@ -470,11 +484,13 @@ table.episodes tr:hover td{
 
 .timeline-add{
   position:relative;
+  display:block;
   left:auto;
   right:auto;
   bottom:auto;
   margin:8px;
   width:calc(100% - 16px);
+  box-sizing:border-box;
   z-index:4;
   background:rgba(28,31,36,.92);
 }
@@ -3841,7 +3857,7 @@ function timelineSlotHtml(s, context){
 
   const top = start - context.start;
   const height = Math.max(
-    34,
+    68,
     durationMin * context.pxPerMinute - 4
   );
 
@@ -3916,7 +3932,9 @@ function buildTimelineGrid(columns, kind){
       columns.map(c => c.slots)
     );
 
-  const pxPerMinute = 1.15;
+  // 30' = ~69px, ώστε η ζώνη να κρατά την ίδια άνετη εμφάνιση
+  // που είχε στο αρχικό εβδομαδιαίο πρόγραμμα.
+  const pxPerMinute = 2.30;
   const totalMinutes = bounds.end - bounds.start;
   const bodyHeight = totalMinutes * pxPerMinute;
 
