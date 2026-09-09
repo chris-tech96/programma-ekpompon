@@ -432,28 +432,23 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  min-height:56px;
-  overflow:hidden;
+  min-height:76px;
+  overflow:visible;
   z-index:2;
   box-sizing:border-box;
   padding:6px 8px;
-  line-height:1.28;
+  line-height:1.22;
   display:flex;
   flex-direction:column;
   gap:1px;
 }
 
-.timeline-slot .t,
-.timeline-slot .s,
-.timeline-slot .e{
+.timeline-slot .t{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
   display:block;
   max-width:100%;
-}
-
-.timeline-slot .t{
   font-family:var(--font-d);
   font-variant-numeric:tabular-nums;
   font-size:12px;
@@ -461,6 +456,15 @@ table.episodes tr:hover td{
   letter-spacing:.2px;
   color:var(--accent);
   flex-shrink:0;
+}
+
+.timeline-slot .s,
+.timeline-slot .e{
+  white-space:normal;
+  overflow-wrap:break-word;
+  word-break:break-word;
+  display:block;
+  max-width:100%;
 }
 
 .timeline-slot .s{
@@ -3858,7 +3862,7 @@ function timelineSlotHtml(s, context){
 
   const top = start - context.start;
   const height = Math.max(
-    56,
+    76,
     durationMin * context.pxPerMinute - 4
   );
 
@@ -4025,29 +4029,45 @@ function autoFitTimelineText(container){
 
   scope.querySelectorAll('.timeline-slot').forEach(slotEl => {
 
+    // reset before measuring, in case of re-renders
+    slotEl.style.height = '';
     ['.t','.s','.e'].forEach(sel => {
-
       const el = slotEl.querySelector(sel);
-      if(!el) return;
-
-      // reset to the CSS default before measuring, in case of re-renders
-      el.style.fontSize = '';
-
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      const minSize = 7.5;
-      let guard = 0;
-
-      while(
-        el.scrollWidth > el.clientWidth + 1 &&
-        size > minSize &&
-        guard < 40
-      ){
-        size -= 0.5;
-        el.style.fontSize = size + 'px';
-        guard++;
-      }
-
+      if(el) el.style.fontSize = '';
     });
+
+    const minSize = 8.5;
+    let guard = 0;
+
+    function overflowAmount(){
+      return slotEl.scrollHeight - slotEl.clientHeight;
+    }
+
+    // shrink .s and .e (they can wrap) — leave .t (the time) alone, it's short
+    while(overflowAmount() > 1 && guard < 30){
+
+      let shrunkAny = false;
+
+      ['.s','.e'].forEach(sel => {
+        const el = slotEl.querySelector(sel);
+        if(!el) return;
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        if(size > minSize){
+          el.style.fontSize = (size - 0.5) + 'px';
+          shrunkAny = true;
+        }
+      });
+
+      if(!shrunkAny) break;
+      guard++;
+
+    }
+
+    // last resort: if it still doesn't fully fit even at minimum readable
+    // size, grow the box itself rather than ever hide part of the name
+    if(overflowAmount() > 1){
+      slotEl.style.height = (slotEl.scrollHeight + 2) + 'px';
+    }
 
   });
 
