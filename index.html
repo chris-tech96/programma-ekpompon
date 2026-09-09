@@ -356,7 +356,7 @@ table.episodes tr:hover td{
 .timeline-wrap{
   --timeline-cols:7;
   display:grid;
-  grid-template-columns:84px repeat(var(--timeline-cols),minmax(230px,1fr));
+  grid-template-columns:72px repeat(var(--timeline-cols),minmax(190px,1fr));
   width:max-content;
   min-width:100%;
   border:1px solid var(--border-soft);
@@ -368,7 +368,7 @@ table.episodes tr:hover td{
 .timeline-head-spacer,
 .timeline-head-label{
   min-height:46px;
-  padding:12px 14px;
+  padding:10px 12px;
   border-bottom:1px solid var(--border-soft);
   background:var(--panel-2);
 }
@@ -414,7 +414,7 @@ table.episodes tr:hover td{
 }
 
 .timeline-track{
-  --half-hour:48px;
+  --half-hour:34.5px;
   position:relative;
   min-width:0;
   background:
@@ -432,49 +432,64 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  min-height:108px;
+  min-height:56px;
   overflow:hidden;
   z-index:2;
   box-sizing:border-box;
-  padding:10px 12px;
-  line-height:1.48;
+  padding:6px 8px;
+  line-height:1.28;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
 }
 
 .timeline-slot .t,
 .timeline-slot .s,
 .timeline-slot .e{
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-  overflow-wrap:anywhere;
-  word-break:break-word;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  display:block;
+  max-width:100%;
 }
 
 .timeline-slot .t{
   font-family:var(--font-d);
   font-variant-numeric:tabular-nums;
-  font-size:15px;
+  font-size:12px;
   font-weight:600;
-  letter-spacing:.3px;
+  letter-spacing:.2px;
   color:var(--accent);
-  margin-bottom:2px;
+  flex-shrink:0;
 }
 
 .timeline-slot .s{
-  font-size:12.5px;
+  font-size:10.5px;
   color:var(--text-dim);
-  margin-top:1px;
+  flex-shrink:0;
 }
 
 .timeline-slot .e{
-  font-size:12.5px;
+  font-size:11px;
   font-weight:500;
-  margin-top:1px;
   padding-right:15px;
+  flex-shrink:0;
 }
 
 .timeline-slot:hover{
   z-index:3;
+  overflow:visible;
+}
+
+.timeline-slot:hover .t,
+.timeline-slot:hover .s,
+.timeline-slot:hover .e{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  background:inherit;
 }
 
 .timeline-empty{
@@ -3859,7 +3874,7 @@ function timelineSlotHtml(s, context){
 
   const top = start - context.start;
   const height = Math.max(
-    78,
+    56,
     durationMin * context.pxPerMinute - 4
   );
 
@@ -3879,11 +3894,14 @@ function timelineSlotHtml(s, context){
       ? 'edit-slot'
       : 'edit-day-slot';
 
+  const fullTitle = escapeHtml(`${s.time}–${end} · ${s.showName} · ${s.episodeTitle}`);
+
   return `
     <div
       class="timeline-slot slot"
       data-act="${editAction}"
       ${extraAttrs}
+      title="${fullTitle}"
       style="
         top:${top * context.pxPerMinute}px;
         height:${height}px;
@@ -3936,7 +3954,7 @@ function buildTimelineGrid(columns, kind){
 
   // 30' = ~69px, ώστε η ζώνη να κρατά την ίδια άνετη εμφάνιση
   // που είχε στο αρχικό εβδομαδιαίο πρόγραμμα.
-  const pxPerMinute = 3.2;
+  const pxPerMinute = 2.45;
   const totalMinutes = bounds.end - bounds.start;
   const bodyHeight = totalMinutes * pxPerMinute;
 
@@ -4016,6 +4034,40 @@ function buildTimelineGrid(columns, kind){
   `;
 }
 
+
+function autoFitTimelineText(container){
+
+  const scope = container || document;
+
+  scope.querySelectorAll('.timeline-slot').forEach(slotEl => {
+
+    ['.t','.s','.e'].forEach(sel => {
+
+      const el = slotEl.querySelector(sel);
+      if(!el) return;
+
+      // reset to the CSS default before measuring, in case of re-renders
+      el.style.fontSize = '';
+
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      const minSize = 7.5;
+      let guard = 0;
+
+      while(
+        el.scrollWidth > el.clientWidth + 1 &&
+        size > minSize &&
+        guard < 40
+      ){
+        size -= 0.5;
+        el.style.fontSize = size + 'px';
+        guard++;
+      }
+
+    });
+
+  });
+
+}
 
 function renderWeek(){
 
@@ -4134,6 +4186,8 @@ function renderWeek(){
 
   grid.innerHTML =
     buildTimelineGrid(columns, 'week');
+
+  autoFitTimelineText(grid);
 }
 
 
@@ -4783,6 +4837,8 @@ function renderDateWeekGrid(){
   document.getElementById(
     'month-list'
   ).innerHTML = html;
+
+  autoFitTimelineText(document.getElementById('month-list'));
 }
 
 
