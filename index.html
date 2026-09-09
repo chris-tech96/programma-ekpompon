@@ -432,9 +432,29 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  overflow:hidden;
+  overflow:visible;
   min-height:34px;
   z-index:2;
+}
+
+.timeline-slot .t,
+.timeline-slot .s,
+.timeline-slot .e{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.timeline-slot .t{
+  font-size:12px;
+}
+
+.timeline-slot .s{
+  font-size:12px;
+}
+
+.timeline-slot .e{
+  font-size:11px;
 }
 
 .timeline-slot:hover{
@@ -449,11 +469,12 @@ table.episodes tr:hover td{
 }
 
 .timeline-add{
-  position:absolute;
-  left:8px;
-  right:8px;
-  bottom:8px;
-  margin:0;
+  position:relative;
+  left:auto;
+  right:auto;
+  bottom:auto;
+  margin:8px;
+  width:calc(100% - 16px);
   z-index:4;
   background:rgba(28,31,36,.92);
 }
@@ -3826,17 +3847,17 @@ function timelineSlotHtml(s, context){
 
   const end = addDuration(s.time, s.duration || 0);
   const deleteAction =
-    context.kind === 'week'
+    context.editMode === 'week'
       ? 'quick-delete-week'
       : 'quick-delete-day';
 
   const extraAttrs =
     context.kind === 'week'
-      ? `data-slot="${s.id}"`
+      ? `data-day="${context.day || ''}" data-slot="${s.id}"`
       : `data-date="${context.date}" data-slot="${s.id}"`;
 
   const editAction =
-    context.kind === 'week'
+    context.editMode === 'week'
       ? 'edit-slot'
       : 'edit-day-slot';
 
@@ -3922,6 +3943,8 @@ function buildTimelineGrid(columns, kind){
 
     const slotContext = {
       kind,
+      editMode: col.editMode || (col.date ? 'day' : 'week'),
+      day: col.day || null,
       date: col.date || null,
       start: bounds.start,
       pxPerMinute
@@ -3945,8 +3968,8 @@ function buildTimelineGrid(columns, kind){
           class="timeline-track"
           style="height:${bodyHeight}px;">
           ${body}
-          ${col.addButton || ''}
         </div>
+        ${col.addButton || ''}
       </div>
     `;
   }).join('');
@@ -4027,6 +4050,8 @@ function renderWeek(){
           </span>
         `,
         slots: state.weekly[day] || [],
+        day,
+        editMode:'week',
         copyButton: `
           <button
             class="btn ghost small"
@@ -4066,6 +4091,7 @@ function renderWeek(){
     `,
     slots: nextMondaySlots,
     date: nextMondayStr,
+    editMode:'day',
     copyButton: `
       <button
         class="btn ghost small"
@@ -5786,21 +5812,7 @@ document.addEventListener(
         act === 'edit-slot'
       ){
 
-        const dayCol =
-          actEl.closest(
-            '.day-col'
-          );
-
-        const day =
-          DAYS.find(
-            d =>
-              dayCol &&
-              dayCol.querySelector(
-                '.day-head .name'
-              )?.textContent
-                .trim()
-                .startsWith(d)
-          );
+        const day = actEl.dataset.day;
 
         if(day){
 
