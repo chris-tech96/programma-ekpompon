@@ -2735,12 +2735,23 @@ async function writeBackPlayDate(slot, dateISO){
     const row = values[foundRowIdx];
     const dateStr = formatDateForSheet(dateISO);
 
-    // don't add a duplicate if this exact date is already recorded somewhere in this row
+    // don't add a duplicate if ANY date already recorded in this row falls
+    // within the same week (Mon–Sun) as the date being written — e.g. weekend
+    // reruns of a show already aired that week shouldn't count as a new date
+    const weekStartISO = mondayOfDate(dateISO);
+    const weekEndISO = addDaysToDate(weekStartISO, 6);
+    const [wsY, wsM, wsD] = weekStartISO.split('-').map(Number);
+    const [weY, weM, weD] = weekEndISO.split('-').map(Number);
+    const weekStartDate = new Date(wsY, wsM-1, wsD);
+    const weekEndDate = new Date(weY, weM-1, weD, 23, 59, 59);
+
     for(let c = dateStart; c < row.length; c++){
-      const existing = (row[c] || '').trim().replace(/[,;]+$/,'');
-      if(existing === dateStr){
+      const existingRaw = (row[c] || '').trim();
+      if(!existingRaw) continue;
+      const existingDate = parseLooseDate(existingRaw);
+      if(existingDate && existingDate >= weekStartDate && existingDate <= weekEndDate){
         await fetchShow(show);
-        return { ok:true, reason:'already-present' };
+        return { ok:true, reason:'already-present-this-week' };
       }
     }
 
