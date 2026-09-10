@@ -3900,7 +3900,7 @@ function timelineSlotHtml(s, context){
       data-target-height="${height}"
       style="
         top:${top * context.pxPerMinute}px;
-        height:${height}px;
+        min-height:${height}px;
         border-left-color:${getShowColor(s.showId)};">
 
       <button
@@ -4038,75 +4038,30 @@ function autoFitTimelineText(container){
 
   if(!slots.length) return;
 
-  const minSize = 8.5;
+  // clear any previous explicit height so each box naturally sizes to its
+  // own content at full, readable font size (min-height from CSS/inline
+  // still applies as a floor)
+  slots.forEach(slotEl => { slotEl.style.height = ''; });
 
-  // Phase 1: shrink each slot's text independently to fit its OWN
-  // time-proportional height, and record how tall it would still need
-  // to be if even the minimum font size doesn't fully fit.
-  const measured = slots.map(slotEl => {
-
-    const targetHeight =
-      parseFloat(slotEl.dataset.targetHeight) ||
-      slotEl.getBoundingClientRect().height;
-
-    ['.t','.s','.e'].forEach(sel => {
-      const el = slotEl.querySelector(sel);
-      if(el) el.style.fontSize = '';
-    });
-
-    slotEl.style.height = targetHeight + 'px';
-
-    function overflowAmount(){
-      return slotEl.scrollHeight - slotEl.clientHeight;
-    }
-
-    let guard = 0;
-
-    while(overflowAmount() > 1 && guard < 30){
-
-      let shrunkAny = false;
-
-      ['.s','.e'].forEach(sel => {
-        const el = slotEl.querySelector(sel);
-        if(!el) return;
-        const size = parseFloat(getComputedStyle(el).fontSize);
-        if(size > minSize){
-          el.style.fontSize = (size - 0.5) + 'px';
-          shrunkAny = true;
-        }
-      });
-
-      if(!shrunkAny) break;
-      guard++;
-
-    }
-
-    const need = Math.max(targetHeight, slotEl.scrollHeight);
-
-    return {
-      slotEl,
-      need,
-      top: Math.round(parseFloat(slotEl.style.top) || 0)
-    };
-
-  });
-
-  // Phase 2: group by starting row (same top position = same clock time
-  // across the different day columns) and give every slot in that row
-  // the same, tallest height, so the grid stays aligned across columns.
+  // group by starting row (same top position = same clock time across the
+  // different day columns) and give every slot in that row the same height —
+  // the tallest natural height among them — so the grid stays aligned.
   const groups = {};
 
-  measured.forEach(item => {
-    if(!groups[item.top]) groups[item.top] = [];
-    groups[item.top].push(item);
+  slots.forEach(slotEl => {
+    const top = Math.round(parseFloat(slotEl.style.top) || 0);
+    if(!groups[top]) groups[top] = [];
+    groups[top].push(slotEl);
   });
 
   Object.values(groups).forEach(group => {
 
-    const maxNeed = Math.max(...group.map(g => g.need));
+    const maxHeight = Math.max(
+      ...group.map(el => el.getBoundingClientRect().height)
+    );
 
-    group.forEach(g => {
-      g.slotEl.style.height = maxNeed + 'px';
+    group.forEach(el => {
+      el.style.height = maxHeight + 'px';
     });
 
   });
