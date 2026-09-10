@@ -2813,6 +2813,13 @@ async function runAccessGate(){
           render();
           startBackgroundSync();
 
+          if(document.fonts && document.fonts.ready){
+            document.fonts.ready.then(() => {
+              renderWeek();
+              if(dateWeekStart) renderMonth();
+            });
+          }
+
         } else {
 
           googleAccessToken = null;
