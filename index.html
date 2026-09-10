@@ -4027,29 +4027,34 @@ function buildTimelineGrid(columns, kind){
 function autoFitTimelineText(container){
 
   const scope = container || document;
+  const slots = Array.from(scope.querySelectorAll('.timeline-slot'));
 
-  scope.querySelectorAll('.timeline-slot').forEach(slotEl => {
+  if(!slots.length) return;
+
+  const minSize = 8.5;
+
+  // Phase 1: shrink each slot's text independently to fit its OWN
+  // time-proportional height, and record how tall it would still need
+  // to be if even the minimum font size doesn't fully fit.
+  const measured = slots.map(slotEl => {
 
     const targetHeight =
       parseFloat(slotEl.dataset.targetHeight) ||
       slotEl.getBoundingClientRect().height;
 
-    // reset font sizes, then pin the box to its intended (time-proportional)
-    // height so we measure against the REAL constraint, not an auto-sized box
     ['.t','.s','.e'].forEach(sel => {
       const el = slotEl.querySelector(sel);
       if(el) el.style.fontSize = '';
     });
-    slotEl.style.height = targetHeight + 'px';
 
-    const minSize = 8.5;
-    let guard = 0;
+    slotEl.style.height = targetHeight + 'px';
 
     function overflowAmount(){
       return slotEl.scrollHeight - slotEl.clientHeight;
     }
 
-    // shrink .s and .e (they can wrap) — leave .t (the time) alone, it's short
+    let guard = 0;
+
     while(overflowAmount() > 1 && guard < 30){
 
       let shrunkAny = false;
@@ -4069,11 +4074,33 @@ function autoFitTimelineText(container){
 
     }
 
-    // last resort: if it still doesn't fully fit even at minimum readable
-    // size, grow the box itself rather than ever hide part of the name
-    if(overflowAmount() > 1){
-      slotEl.style.height = (slotEl.scrollHeight + 2) + 'px';
-    }
+    const need = Math.max(targetHeight, slotEl.scrollHeight);
+
+    return {
+      slotEl,
+      need,
+      top: Math.round(parseFloat(slotEl.style.top) || 0)
+    };
+
+  });
+
+  // Phase 2: group by starting row (same top position = same clock time
+  // across the different day columns) and give every slot in that row
+  // the same, tallest height, so the grid stays aligned across columns.
+  const groups = {};
+
+  measured.forEach(item => {
+    if(!groups[item.top]) groups[item.top] = [];
+    groups[item.top].push(item);
+  });
+
+  Object.values(groups).forEach(group => {
+
+    const maxNeed = Math.max(...group.map(g => g.need));
+
+    group.forEach(g => {
+      g.slotEl.style.height = maxNeed + 'px';
+    });
 
   });
 
