@@ -4069,12 +4069,17 @@ function autoFitTimelineText(container){
 
   Object.values(groups).forEach(group => {
 
-    const maxHeight = Math.max(
-      ...group.map(el => el.getBoundingClientRect().height)
-    );
+    const heights = group.map(el => el.getBoundingClientRect().height);
+    const maxHeight = Math.max(...heights);
+
+    // Safety guard: a measurement of 0 (or smaller than an element's own
+    // natural size) means the layout wasn't ready yet — never apply that,
+    // it would shrink-clip content that was already displaying correctly.
+    if(maxHeight <= 0) return;
 
     group.forEach(el => {
-      el.style.height = maxHeight + 'px';
+      const own = el.getBoundingClientRect().height;
+      el.style.height = Math.max(maxHeight, own) + 'px';
     });
 
   });
