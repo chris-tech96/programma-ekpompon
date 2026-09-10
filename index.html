@@ -5602,6 +5602,14 @@ document.addEventListener(
 
       });
 
+      if(t.dataset.tab === 'week'){
+        requestAnimationFrame(() => autoFitTimelineText(document.getElementById('week-grid')));
+      }
+
+      if(t.dataset.tab === 'month'){
+        requestAnimationFrame(() => autoFitTimelineText(document.getElementById('month-list')));
+      }
+
       return;
 
     }
