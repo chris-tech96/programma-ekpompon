@@ -432,7 +432,7 @@ table.episodes tr:hover td{
   left:6px;
   right:6px;
   margin:0;
-  min-height:230px;
+  min-height:36px;
   overflow:visible;
   z-index:2;
   box-sizing:border-box;
@@ -3874,18 +3874,11 @@ function timelineBounds(daySlots){
   return {start, end};
 }
 
-function timelineSlotHtml(s, context){
+function timelineSlotHtml(s, context, availableHeightPx){
   const start = broadcastMinutes(s.time);
-  const durationMin = Math.max(
-    18,
-    Math.round((s.duration || 0) / 60)
-  );
 
   const top = start - context.start;
-  const height = Math.max(
-    230,
-    durationMin * context.pxPerMinute - 4
-  );
+  const height = availableHeightPx;
 
   const end = addDuration(s.time, s.duration || 0);
   const deleteAction =
@@ -3911,10 +3904,9 @@ function timelineSlotHtml(s, context){
       data-act="${editAction}"
       ${extraAttrs}
       title="${fullTitle}"
-      data-target-height="${height}"
       style="
         top:${top * context.pxPerMinute}px;
-        min-height:${height}px;
+        height:${height}px;
         box-shadow:inset 3px 0 0 0 ${getShowColor(s.showId)}, 0 0 0 1px var(--border-soft);">
 
       <button
@@ -3998,9 +3990,32 @@ function buildTimelineGrid(columns, kind){
       pxPerMinute
     };
 
+    // Each slot's height is capped exactly at the gap to the NEXT slot in
+    // this same column, so it can never grow over/into the following slot.
+    // The last slot in a column gets generous room since nothing follows it.
     const body =
       slots.length
-        ? slots.map(s=>timelineSlotHtml(s, slotContext)).join('')
+        ? slots.map((s,idx)=>{
+
+            const startMin = broadcastMinutes(s.time) - bounds.start;
+
+            let availablePx;
+
+            if(idx < slots.length - 1){
+
+              const nextStartMin = broadcastMinutes(slots[idx+1].time) - bounds.start;
+              availablePx = Math.max(40, (nextStartMin - startMin) * pxPerMinute - 4);
+
+            }else{
+
+              const naturalDur = Math.max(18, Math.round((s.duration||0)/60));
+              availablePx = Math.max(150, naturalDur * pxPerMinute - 4);
+
+            }
+
+            return timelineSlotHtml(s, slotContext, availablePx);
+
+          }).join('')
         : `<div class="empty-note timeline-empty">Καμία ζώνη</div>`;
 
     return `
@@ -4052,36 +4067,41 @@ function autoFitTimelineText(container){
 
   if(!slots.length) return;
 
-  // clear any previous explicit height so each box naturally sizes to its
-  // own content at full, readable font size (min-height from CSS/inline
-  // still applies as a floor)
-  slots.forEach(slotEl => { slotEl.style.height = ''; });
+  const minSize = 7;
 
-  // group by starting row (same top position = same clock time across the
-  // different day columns) and give every slot in that row the same height —
-  // the tallest natural height among them — so the grid stays aligned.
-  const groups = {};
-
+  // Shrink .s and .e (they wrap) until the content fits within the slot's
+  // real, fixed, non-overlapping height — never grow the box, since that
+  // would push into the next slot's space.
   slots.forEach(slotEl => {
-    const top = Math.round(parseFloat(slotEl.style.top) || 0);
-    if(!groups[top]) groups[top] = [];
-    groups[top].push(slotEl);
-  });
 
-  Object.values(groups).forEach(group => {
-
-    const heights = group.map(el => el.getBoundingClientRect().height);
-    const maxHeight = Math.max(...heights);
-
-    // Safety guard: a measurement of 0 (or smaller than an element's own
-    // natural size) means the layout wasn't ready yet — never apply that,
-    // it would shrink-clip content that was already displaying correctly.
-    if(maxHeight <= 0) return;
-
-    group.forEach(el => {
-      const own = el.getBoundingClientRect().height;
-      el.style.height = Math.max(maxHeight, own) + 'px';
+    ['.s','.e'].forEach(sel => {
+      const el = slotEl.querySelector(sel);
+      if(el) el.style.fontSize = '';
     });
+
+    let guard = 0;
+
+    while(
+      slotEl.scrollHeight > slotEl.clientHeight + 1 &&
+      guard < 40
+    ){
+
+      let shrunkAny = false;
+
+      ['.s','.e'].forEach(sel => {
+        const el = slotEl.querySelector(sel);
+        if(!el) return;
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        if(size > minSize){
+          el.style.fontSize = (size - 0.5) + 'px';
+          shrunkAny = true;
+        }
+      });
+
+      if(!shrunkAny) break;
+      guard++;
+
+    }
 
   });
 
