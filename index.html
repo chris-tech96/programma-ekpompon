@@ -4107,6 +4107,35 @@ function autoFitTimelineText(container){
 
 }
 
+let timelineFitObserverScheduled = false;
+
+function scheduleTimelineFit(container){
+
+  if(timelineFitObserverScheduled) return;
+  timelineFitObserverScheduled = true;
+
+  requestAnimationFrame(() => {
+    timelineFitObserverScheduled = false;
+    autoFitTimelineText(container);
+  });
+
+}
+
+function watchTimelineContainer(id){
+
+  const el = document.getElementById(id);
+  if(!el || el._timelineFitObserver) return;
+
+  const observer = new MutationObserver(() => {
+    scheduleTimelineFit(el);
+  });
+
+  observer.observe(el, { childList:true, subtree:true, characterData:true });
+
+  el._timelineFitObserver = observer;
+
+}
+
 function renderWeek(){
 
   const grid =
@@ -4225,8 +4254,8 @@ function renderWeek(){
   grid.innerHTML =
     buildTimelineGrid(columns, 'week');
 
+  watchTimelineContainer('week-grid');
   requestAnimationFrame(() => autoFitTimelineText(grid));
-  setTimeout(() => autoFitTimelineText(grid), 150);
 }
 
 
@@ -4877,8 +4906,8 @@ function renderDateWeekGrid(){
     'month-list'
   ).innerHTML = html;
 
+  watchTimelineContainer('month-list');
   requestAnimationFrame(() => autoFitTimelineText(document.getElementById('month-list')));
-  setTimeout(() => autoFitTimelineText(document.getElementById('month-list')), 150);
 }
 
 
