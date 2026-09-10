@@ -4200,6 +4200,7 @@ function renderWeek(){
     buildTimelineGrid(columns, 'week');
 
   requestAnimationFrame(() => autoFitTimelineText(grid));
+  setTimeout(() => autoFitTimelineText(grid), 150);
 }
 
 
@@ -4851,6 +4852,7 @@ function renderDateWeekGrid(){
   ).innerHTML = html;
 
   requestAnimationFrame(() => autoFitTimelineText(document.getElementById('month-list')));
+  setTimeout(() => autoFitTimelineText(document.getElementById('month-list')), 150);
 }
 
 
