@@ -436,23 +436,24 @@ table.episodes tr:hover td{
   overflow:visible;
   z-index:2;
   box-sizing:border-box;
-  padding:7px 9px;
+  padding:7px 9px 7px 12px;
   line-height:1.24;
   display:flex;
   flex-direction:column;
   gap:2px;
   background:var(--panel);
-  border:1px solid var(--border-soft);
-  border-left:3px solid var(--accent);
+  box-shadow:
+    inset 3px 0 0 0 var(--accent),
+    0 0 0 1px var(--border-soft);
   border-radius:3px;
   cursor:pointer;
   transition:.12s;
 }
 
 .timeline-slot:hover{
-  border-top-color:var(--text-dim);
-  border-right-color:var(--text-dim);
-  border-bottom-color:var(--text-dim);
+  box-shadow:
+    inset 3px 0 0 0 var(--accent),
+    0 0 0 1px var(--text-dim);
   background:#20242a;
 }
 
@@ -3914,7 +3915,7 @@ function timelineSlotHtml(s, context){
       style="
         top:${top * context.pxPerMinute}px;
         min-height:${height}px;
-        border-left-color:${getShowColor(s.showId)};">
+        box-shadow:inset 3px 0 0 0 ${getShowColor(s.showId)}, 0 0 0 1px var(--border-soft);">
 
       <button
         data-act="${deleteAction}"
