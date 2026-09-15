@@ -3860,6 +3860,10 @@ function getCurrentWeekDates(){
 }
 
 
+const TIMELINE_PX_PER_MINUTE = 2.45;
+
+let dragSlotData = null;
+
 function timelineBounds(daySlots){
   const all = daySlots.flatMap(slots => slots || []);
   if(!all.length){
@@ -3917,6 +3921,7 @@ function timelineSlotHtml(s, context, availableHeightPx){
       class="timeline-slot"
       data-act="${editAction}"
       ${extraAttrs}
+      draggable="true"
       title="${fullTitle}"
       style="
         top:${top * context.pxPerMinute}px;
@@ -4012,7 +4017,7 @@ function buildTimelineGrid(columns, kind){
 
   // 30' = ~69px, ώστε η ζώνη να κρατά την ίδια άνετη εμφάνιση
   // που είχε στο αρχικό εβδομαδιαίο πρόγραμμα.
-  const pxPerMinute = 2.45;
+  const pxPerMinute = TIMELINE_PX_PER_MINUTE;
   const totalMinutes = bounds.end - bounds.start;
   const bodyHeight = totalMinutes * pxPerMinute;
 
@@ -4085,6 +4090,10 @@ function buildTimelineGrid(columns, kind){
 
         <div
           class="timeline-track"
+          data-day="${col.day || ''}"
+          data-date="${col.date || ''}"
+          data-start-min="${bounds.start}"
+          data-kind="${kind}"
           style="height:${bodyHeight}px;">
           ${body}
         </div>
@@ -4264,6 +4273,19 @@ function renderWeek(){
             data-day="${day}">
             + Προσθήκη ζώνης
           </button>
+          ${
+            episodeClipboard
+              ? `
+                <button
+                  class="add-slot-btn timeline-add"
+                  data-act="paste-new-week"
+                  data-day="${day}"
+                  style="color:var(--accent);border-color:var(--accent);">
+                  &#128229; Επικόλληση (${escapeHtml(episodeClipboard.episodeTitle||'')})
+                </button>
+              `
+              : ''
+          }
         `
       };
     });
@@ -4304,6 +4326,19 @@ function renderWeek(){
         data-date="${nextMondayStr}">
         + Προσθήκη ζώνης
       </button>
+      ${
+        episodeClipboard
+          ? `
+            <button
+              class="add-slot-btn timeline-add"
+              data-act="paste-new-day"
+              data-date="${nextMondayStr}"
+              style="color:var(--accent);border-color:var(--accent);">
+              &#128229; Επικόλληση (${escapeHtml(episodeClipboard.episodeTitle||'')})
+            </button>
+          `
+          : ''
+      }
     `
   });
 
@@ -4952,6 +4987,19 @@ function renderDateWeekGrid(){
           data-date="${dateStr}">
           + Προσθήκη ζώνης
         </button>
+        ${
+          episodeClipboard
+            ? `
+              <button
+                class="add-slot-btn timeline-add"
+                data-act="paste-new-day"
+                data-date="${dateStr}"
+                style="color:var(--accent);border-color:var(--accent);">
+                &#128229; Επικόλληση (${escapeHtml(episodeClipboard.episodeTitle||'')})
+              </button>
+            `
+            : ''
+        }
       `
     });
   }
@@ -6264,6 +6312,77 @@ document.addEventListener(
 
       }
 
+      else if(act === 'paste-new-week' || act === 'paste-new-day'){
+
+        if(!episodeClipboard) return;
+
+        const isWeek = act === 'paste-new-week';
+
+        const ctx =
+          isWeek
+            ? { mode:'week', day: actEl.dataset.day }
+            : { mode:'day', date: actEl.dataset.date };
+
+        const newSlot = {
+
+          id: uid(),
+
+          time: suggestNextTime(ctx),
+
+          showId: episodeClipboard.showId,
+          showName: episodeClipboard.showName,
+          episodeTitle: episodeClipboard.episodeTitle,
+          duration: episodeClipboard.duration,
+          sourcePath: episodeClipboard.sourcePath || null,
+          dataRowIdx: episodeClipboard.dataRowIdx ?? null,
+          comment: null,
+          writtenBack: false
+
+        };
+
+        if(isWeek){
+
+          const arr = (state.weekly[actEl.dataset.day] || []).slice();
+          arr.push(newSlot);
+          state.weekly[actEl.dataset.day] = arr;
+
+        }else{
+
+          const entry = ensureMonthEntryForDate(actEl.dataset.date);
+
+          const base =
+            entry.overrides[actEl.dataset.date]
+              ? entry.overrides[actEl.dataset.date].slice()
+              : getEffectiveDaySlots(actEl.dataset.date).slice();
+
+          base.push(newSlot);
+          entry.overrides[actEl.dataset.date] = base;
+
+        }
+
+        saveState();
+        renderWeek();
+        renderMonth();
+
+        if(googleAccessToken){
+
+          const writeDate =
+            isWeek
+              ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(actEl.dataset.day)])
+              : actEl.dataset.date;
+
+          const result = await writeBackPlayDate(newSlot, writeDate);
+
+          if(result.ok){
+            renderShows();
+          } else if(!['no-auth','not-auto-show','no-row'].includes(result.reason)){
+            alert('Δεν έγινε εγγραφή πίσω στο sheet: ' + result.reason);
+          }
+
+        }
+
+      }
+
       else if(
         act === 'quick-delete-week'
       ){
@@ -7196,6 +7315,153 @@ document.addEventListener(
 
   }
 );
+
+document.addEventListener('dragstart', e => {
+
+  const slotEl = e.target.closest('.timeline-slot');
+  if(!slotEl) return;
+
+  const isWeek = !!slotEl.dataset.day;
+
+  const arr =
+    isWeek
+      ? (state.weekly[slotEl.dataset.day] || [])
+      : getEffectiveDaySlots(slotEl.dataset.date);
+
+  const slot = arr.find(s => s.id === slotEl.dataset.slot);
+  if(!slot) return;
+
+  dragSlotData = {
+    slot: Object.assign({}, slot),
+    sourceIsWeek: isWeek,
+    sourceDay: slotEl.dataset.day || null,
+    sourceDate: slotEl.dataset.date || null
+  };
+
+  e.dataTransfer.effectAllowed = 'copyMove';
+
+  try{ e.dataTransfer.setData('text/plain', slot.id); }catch(err){}
+
+});
+
+document.addEventListener('dragover', e => {
+
+  const track = e.target.closest('.timeline-track');
+
+  if(track && dragSlotData){
+    e.preventDefault();
+    e.dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
+  }
+
+});
+
+document.addEventListener('drop', async e => {
+
+  const track = e.target.closest('.timeline-track');
+  if(!track || !dragSlotData) return;
+
+  e.preventDefault();
+
+  const isCopy = e.ctrlKey;
+
+  const startMin = parseFloat(track.dataset.startMin) || 0;
+  const rect = track.getBoundingClientRect();
+  const offsetY = e.clientY - rect.top;
+
+  let clickMin = startMin + offsetY / TIMELINE_PX_PER_MINUTE;
+  clickMin = Math.round(clickMin / 5) * 5;
+  const newTime = minToTime(clickMin);
+
+  const targetDay = track.dataset.day || null;
+  const targetDate = track.dataset.date || null;
+  const isWeekTarget = !!targetDay;
+
+  const newSlot = Object.assign({}, dragSlotData.slot, {
+    id: isCopy ? uid() : dragSlotData.slot.id,
+    time: newTime
+  });
+
+  if(!isCopy){
+
+    if(dragSlotData.sourceIsWeek){
+
+      state.weekly[dragSlotData.sourceDay] =
+        (state.weekly[dragSlotData.sourceDay] || []).filter(s => s.id !== dragSlotData.slot.id);
+
+    }else{
+
+      const entry = ensureMonthEntryForDate(dragSlotData.sourceDate);
+
+      const base =
+        entry.overrides[dragSlotData.sourceDate]
+          ? entry.overrides[dragSlotData.sourceDate]
+          : getEffectiveDaySlots(dragSlotData.sourceDate).slice();
+
+      entry.overrides[dragSlotData.sourceDate] =
+        base.filter(s => s.id !== dragSlotData.slot.id);
+
+    }
+
+  }
+
+  if(isWeekTarget){
+
+    let arr = (state.weekly[targetDay] || []).filter(s => s.id !== newSlot.id);
+    arr.push(newSlot);
+    state.weekly[targetDay] = arr;
+
+  }else{
+
+    const entry = ensureMonthEntryForDate(targetDate);
+
+    let base =
+      entry.overrides[targetDate]
+        ? entry.overrides[targetDate].slice()
+        : getEffectiveDaySlots(targetDate).slice();
+
+    base = base.filter(s => s.id !== newSlot.id);
+    base.push(newSlot);
+    entry.overrides[targetDate] = base;
+
+  }
+
+  saveState();
+  renderWeek();
+  renderMonth();
+
+  if(googleAccessToken){
+
+    const writeDate =
+      isWeekTarget
+        ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(targetDay)])
+        : targetDate;
+
+    const result = await writeBackPlayDate(newSlot, writeDate);
+
+    if(result.ok){
+      renderShows();
+    } else if(!['no-auth','not-auto-show','no-row'].includes(result.reason)){
+      alert('Δεν έγινε εγγραφή πίσω στο sheet: ' + result.reason);
+    }
+
+    if(!isCopy){
+
+      const oldWriteDate =
+        dragSlotData.sourceIsWeek
+          ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(dragSlotData.sourceDay)])
+          : dragSlotData.sourceDate;
+
+      if(oldWriteDate !== writeDate){
+        await clearBackPlayDate(dragSlotData.slot, oldWriteDate);
+      }
+
+    }
+
+  }
+
+  dragSlotData = null;
+
+});
 
 document.addEventListener(
   'change',
