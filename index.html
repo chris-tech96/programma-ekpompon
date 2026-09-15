@@ -7369,7 +7369,7 @@ document.addEventListener('drop', async e => {
   const offsetY = e.clientY - rect.top;
 
   let clickMin = startMin + offsetY / TIMELINE_PX_PER_MINUTE;
-  clickMin = Math.round(clickMin / 5) * 5;
+  clickMin = Math.round(clickMin / 30) * 30;
   const newTime = minToTime(clickMin);
 
   const targetDay = track.dataset.day || null;
