@@ -908,20 +908,20 @@ table.episodes tr:hover td{
 
   .p-day h4{
     font-family:'Oswald',Arial,sans-serif;
-    font-size:12.5px;
+    font-size:17px;
     font-weight:600;
     letter-spacing:.6px;
     text-transform:uppercase;
     color:#fff;
     background:#2a2d33;
-    padding:6px 12px;
-    margin:0 0 6px;
+    padding:8px 14px;
+    margin:0 0 7px;
     border-radius:2px;
   }
 
   .p-row{
-    font-size:12.5px;
-    padding:5px 4px;
+    font-size:17px;
+    padding:7px 4px;
     border-bottom:1px solid #eee;
   }
 
@@ -936,7 +936,7 @@ table.episodes tr:hover td{
   }
 
   .p-row .pt{
-    width:90px;
+    width:115px;
     font-family:'Oswald',Arial,sans-serif;
     font-weight:700;
     font-variant-numeric:tabular-nums;
@@ -950,27 +950,27 @@ table.episodes tr:hover td{
 
   .p-row .ps{
     color:#888;
-    font-size:11.5px;
+    font-size:15px;
   }
 
   .p-path-inline{
     display:block;
     border-left:3px solid #e8a33d;
     background:#fbf6ec;
-    padding:4px 9px;
-    margin:4px 0 2px 102px;
+    padding:6px 11px;
+    margin:5px 0 2px 127px;
     font-family:'Oswald',Arial,sans-serif;
     font-weight:600;
-    font-size:10.5px;
+    font-size:14px;
     color:#555;
     word-break:break-all;
   }
 
   .p-note-inline{
     display:block;
-    margin:2px 0 2px 102px;
+    margin:2px 0 2px 127px;
     font-family:'Work Sans',Arial,sans-serif;
-    font-size:11px;
+    font-size:14.5px;
     color:#8a6d1f;
   }
 }
@@ -7882,17 +7882,17 @@ function buildWordRow(s, i){
         ${escapeHtml(s.episodeTitle)}
         ${
           (showWantsPath(s.showId) && effectiveSourcePath(s))
-            ? `<br/><span style="background:#fbf6ec;border-left:3px solid #e8a33d;padding:2px 8px;font-weight:700;font-size:10.5px;color:#555;display:inline-block;margin-top:4px;">${escapeHtml(effectiveSourcePath(s))}</span>`
+            ? `<br/><span style="background:#fbf6ec;border-left:3px solid #e8a33d;padding:2px 8px;font-weight:700;font-size:13.5px;color:#555;display:inline-block;margin-top:4px;">${escapeHtml(effectiveSourcePath(s))}</span>`
             : ''
         }
         ${
           getShowNotes(s.showId)
-            ? `<br/><span style="font-size:10.5px;color:#8a6d1f;">${escapeHtml(getShowNotes(s.showId))}</span>`
+            ? `<br/><span style="font-size:13.5px;color:#8a6d1f;">${escapeHtml(getShowNotes(s.showId))}</span>`
             : ''
         }
         ${
           s.comment
-            ? `<br/><span style="font-size:10.5px;color:#8a6d1f;font-style:italic;">${escapeHtml(s.comment)}</span>`
+            ? `<br/><span style="font-size:13.5px;color:#8a6d1f;font-style:italic;">${escapeHtml(s.comment)}</span>`
             : ''
         }
       </td>
@@ -7953,7 +7953,7 @@ function exportWord(mode){
             border-collapse:collapse;
             width:100%;
             font-family:Calibri,Arial,sans-serif;
-            font-size:12px;
+            font-size:16px;
             margin-bottom:6px;">
 
           <tr style="background:#2a2d33;">
@@ -8015,7 +8015,7 @@ function exportWord(mode){
           border-collapse:collapse;
           width:100%;
           font-family:Calibri,Arial,sans-serif;
-          font-size:12px;
+          font-size:16px;
           margin-bottom:6px;">
 
         <tr style="background:#2a2d33;">
@@ -8132,7 +8132,7 @@ function exportWord(mode){
             border-collapse:collapse;
             width:100%;
             font-family:Calibri,Arial,sans-serif;
-            font-size:12px;
+            font-size:16px;
             margin-bottom:6px;">
 
           <tr style="background:#2a2d33;">
