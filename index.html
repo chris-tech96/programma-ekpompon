@@ -1465,6 +1465,20 @@ table.episodes tr:hover td{
 
       <button
         class="btn ghost"
+        id="sp-copy-episode"
+        title="Αντέγραψε το επεισόδιο για να το βάλεις γρήγορα σε άλλη ζώνη">
+        &#128203; Αντιγραφή
+      </button>
+
+      <button
+        class="btn ghost hidden"
+        id="sp-paste-episode"
+        title="Βάλε το αντιγραμμένο επεισόδιο εδώ">
+        &#128203; Επικόλληση
+      </button>
+
+      <button
+        class="btn ghost"
         id="sp-delete"
         style="margin-left:auto;">
         Διαγραφή
@@ -4965,6 +4979,7 @@ let episodeSort = 'default';
 let episodeSortByShow = {};
 let episodeFilterByShow = {};
 let lastViewedEpisodeByShow = {};
+let episodeClipboard = null;
 
 function sortEpisodes(eps, mode){
   const arr = eps.slice();
@@ -5033,6 +5048,8 @@ function openEditor(ctx){
     'sp-calc'
   ).textContent =
     'Επίλεξε επεισόδιο για να δεις την ώρα λήξης.';
+
+  document.getElementById('sp-paste-episode').classList.toggle('hidden', !episodeClipboard);
 
   document.getElementById('sp-comment').value = '';
 
@@ -5202,32 +5219,6 @@ function renderEpisodePicker(
   }
 
   eps = sortEpisodes(eps, episodeSort);
-
-  // Κράτα πάντα το επιλεγμένο επεισόδιο μέσα στα πρώτα αποτελέσματα.
-  if(targetTitle){
-
-    const selectedIndex =
-      eps.findIndex(
-        e => e.title === targetTitle
-      );
-
-    if(selectedIndex >= 150){
-
-      const selectedEpisode = eps[selectedIndex];
-
-      eps = [
-        selectedEpisode,
-        ...eps.filter(
-          e => e.title !== targetTitle
-        )
-      ];
-
-    }
-
-  }
-
-  eps =
-    eps.slice(0,150);
 
   box.innerHTML =
     eps.map(e=>{
@@ -6313,6 +6304,41 @@ document.addEventListener(
     ){
 
       closeEditor();
+
+      return;
+
+    }
+
+    if(t.id === 'sp-copy-episode'){
+
+      if(!editorCtx.selected){
+        alert('Διάλεξε πρώτα ένα επεισόδιο για να το αντιγράψεις.');
+        return;
+      }
+
+      episodeClipboard = Object.assign({}, editorCtx.selected);
+
+      document.getElementById('sp-paste-episode').classList.remove('hidden');
+
+      return;
+
+    }
+
+    if(t.id === 'sp-paste-episode'){
+
+      if(!episodeClipboard) return;
+
+      editorCtx.selected = Object.assign({}, episodeClipboard);
+
+      const showSelPaste = document.getElementById('sp-show');
+      showSelPaste.value = episodeClipboard.showId;
+
+      renderEpisodePicker(
+        episodeClipboard.showId,
+        document.getElementById('sp-search').value
+      );
+
+      updateCalc();
 
       return;
 
