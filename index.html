@@ -3947,6 +3947,48 @@ function timelineSlotHtml(s, context, availableHeightPx){
         &#9998;
       </span>
 
+      <button
+        data-act="copy-slot-episode"
+        ${extraAttrs}
+        title="Αντιγραφή επεισοδίου"
+        style="
+          position:absolute;
+          bottom:2px;
+          right:22px;
+          background:transparent;
+          border:none;
+          color:var(--text-faint);
+          font-size:12px;
+          line-height:1;
+          cursor:pointer;
+          padding:2px 6px;">
+        &#128203;
+      </button>
+
+      ${
+        episodeClipboard
+          ? `
+            <button
+              data-act="paste-slot-episode"
+              ${extraAttrs}
+              title="Επικόλληση εδώ (${escapeHtml(episodeClipboard.episodeTitle||'')})"
+              style="
+                position:absolute;
+                bottom:2px;
+                right:2px;
+                background:transparent;
+                border:none;
+                color:var(--accent);
+                font-size:12px;
+                line-height:1;
+                cursor:pointer;
+                padding:2px 6px;">
+              &#128229;
+            </button>
+          `
+          : ''
+      }
+
       <div class="t">
         ${s.time}&ndash;${end}
       </div>
@@ -6118,6 +6160,105 @@ document.addEventListener(
 
           dateWeekStart = addDaysToDate(startStr, 7);
           renderMonth();
+
+        }
+
+      }
+
+      else if(act === 'copy-slot-episode'){
+
+        e.stopPropagation();
+
+        const isWeek = !!actEl.dataset.day;
+
+        const arr =
+          isWeek
+            ? (state.weekly[actEl.dataset.day] || [])
+            : getEffectiveDaySlots(actEl.dataset.date);
+
+        const slot = arr.find(s => s.id === actEl.dataset.slot);
+
+        if(slot){
+
+          episodeClipboard = {
+            showId: slot.showId,
+            showName: slot.showName,
+            episodeTitle: slot.episodeTitle,
+            duration: slot.duration,
+            sourcePath: slot.sourcePath || null,
+            dataRowIdx: slot.dataRowIdx ?? null
+          };
+
+          renderWeek();
+          renderMonth();
+
+        }
+
+      }
+
+      else if(act === 'paste-slot-episode'){
+
+        e.stopPropagation();
+
+        if(!episodeClipboard) return;
+
+        const isWeek = !!actEl.dataset.day;
+
+        let arr =
+          isWeek
+            ? state.weekly[actEl.dataset.day]
+            : (
+                ensureMonthEntryForDate(actEl.dataset.date).overrides[actEl.dataset.date]
+                  ? ensureMonthEntryForDate(actEl.dataset.date).overrides[actEl.dataset.date]
+                  : getEffectiveDaySlots(actEl.dataset.date).slice()
+              );
+
+        const idx = arr.findIndex(s => s.id === actEl.dataset.slot);
+        if(idx === -1) return;
+
+        const previousSlot = Object.assign({}, arr[idx]);
+
+        arr[idx] = Object.assign({}, arr[idx], {
+          showId: episodeClipboard.showId,
+          showName: episodeClipboard.showName,
+          episodeTitle: episodeClipboard.episodeTitle,
+          duration: episodeClipboard.duration,
+          sourcePath: episodeClipboard.sourcePath || null,
+          dataRowIdx: episodeClipboard.dataRowIdx ?? null
+        });
+
+        if(isWeek){
+          state.weekly[actEl.dataset.day] = arr;
+        }else{
+          const entry = ensureMonthEntryForDate(actEl.dataset.date);
+          entry.overrides[actEl.dataset.date] = arr;
+        }
+
+        saveState();
+        renderWeek();
+        renderMonth();
+
+        if(googleAccessToken){
+
+          const writeDate =
+            isWeek
+              ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(actEl.dataset.day)])
+              : actEl.dataset.date;
+
+          if(
+            previousSlot.showId !== arr[idx].showId ||
+            (previousSlot.episodeTitle||'').trim() !== (arr[idx].episodeTitle||'').trim()
+          ){
+            await clearBackPlayDate(previousSlot, writeDate);
+          }
+
+          const result = await writeBackPlayDate(arr[idx], writeDate);
+
+          if(result.ok){
+            renderShows();
+          } else if(!['no-auth','not-auto-show','no-row'].includes(result.reason)){
+            alert('Δεν έγινε εγγραφή πίσω στο sheet: ' + result.reason);
+          }
 
         }
 
