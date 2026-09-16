@@ -3942,6 +3942,7 @@ function getCurrentWeekDates(){
 const TIMELINE_PX_PER_MINUTE = 2.45;
 
 let dragSlotData = null;
+let dragAutoScrollInterval = null;
 
 function timelineBounds(daySlots){
   const all = daySlots.flatMap(slots => slots || []);
@@ -7485,9 +7486,42 @@ document.addEventListener('dragover', e => {
     e.dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
   }
 
+  // auto-scroll the page when dragging near the top/bottom edge of the viewport
+  if(dragSlotData){
+
+    const EDGE = 90;
+    const SPEED = 18;
+    const y = e.clientY;
+    const vh = window.innerHeight;
+
+    if(dragAutoScrollInterval){
+      clearInterval(dragAutoScrollInterval);
+      dragAutoScrollInterval = null;
+    }
+
+    if(y < EDGE){
+      dragAutoScrollInterval = setInterval(() => window.scrollBy(0, -SPEED), 16);
+    }else if(y > vh - EDGE){
+      dragAutoScrollInterval = setInterval(() => window.scrollBy(0, SPEED), 16);
+    }
+
+  }
+
+});
+
+document.addEventListener('dragend', () => {
+  if(dragAutoScrollInterval){
+    clearInterval(dragAutoScrollInterval);
+    dragAutoScrollInterval = null;
+  }
 });
 
 document.addEventListener('drop', async e => {
+
+  if(dragAutoScrollInterval){
+    clearInterval(dragAutoScrollInterval);
+    dragAutoScrollInterval = null;
+  }
 
   const track = e.target.closest('.timeline-track');
   if(!track || !dragSlotData) return;
