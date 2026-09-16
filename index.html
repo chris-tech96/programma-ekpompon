@@ -7500,13 +7500,28 @@ document.addEventListener('drop', async e => {
   const targetDate = track.dataset.date || null;
   const isWeekTarget = !!targetDay;
 
-  const targetExistingSlots =
-    isWeekTarget
-      ? (state.weekly[targetDay] || [])
-      : getEffectiveDaySlots(targetDate);
+  const startMin = parseFloat(track.dataset.startMin) || 0;
+  const rect = track.getBoundingClientRect();
+  const offsetY = e.clientY - rect.top;
 
-  const clickMin = findNextAvailableMinutes(targetExistingSlots);
-  const newTime = minToTime(clickMin);
+  let clickMin = startMin + offsetY / TIMELINE_PX_PER_MINUTE;
+
+  if(!isFinite(clickMin)) clickMin = startMin;
+
+  clickMin = Math.round(clickMin / 30) * 30;
+
+  let newTime = minToTime(clickMin);
+
+  // Absolute final guard: no matter what happened above, force the saved
+  // time to exactly :00 or :30 — this cannot be bypassed.
+  {
+    const [gH, gM] = newTime.split(':').map(Number);
+    if(gM !== 0 && gM !== 30){
+      const snappedM = gM < 15 ? 0 : (gM < 45 ? 30 : 0);
+      const snappedH = (gM >= 45) ? (gH + 1) % 24 : gH;
+      newTime = String(snappedH).padStart(2,'0') + ':' + String(snappedM).padStart(2,'0');
+    }
+  }
 
   const newSlot = Object.assign({}, dragSlotData.slot, {
     id: isCopy ? uid() : dragSlotData.slot.id,
