@@ -4160,7 +4160,7 @@ function buildTimelineGrid(columns, kind){
 
     const nextAvailMin = findNextAvailableMinutes(slots);
     const rawAddTop = (nextAvailMin - bounds.start) * pxPerMinute;
-    const addTop = Math.max(0, Math.min(rawAddTop, bodyHeight - 44));
+    const addTop = Math.max(0, rawAddTop);
 
     const addButtonPositioned =
       col.addButton
@@ -7496,17 +7496,17 @@ document.addEventListener('drop', async e => {
 
   const isCopy = true;
 
-  const startMin = parseFloat(track.dataset.startMin) || 0;
-  const rect = track.getBoundingClientRect();
-  const offsetY = e.clientY - rect.top;
-
-  let clickMin = startMin + offsetY / TIMELINE_PX_PER_MINUTE;
-  clickMin = Math.round(clickMin / 30) * 30;
-  const newTime = minToTime(clickMin);
-
   const targetDay = track.dataset.day || null;
   const targetDate = track.dataset.date || null;
   const isWeekTarget = !!targetDay;
+
+  const targetExistingSlots =
+    isWeekTarget
+      ? (state.weekly[targetDay] || [])
+      : getEffectiveDaySlots(targetDate);
+
+  const clickMin = findNextAvailableMinutes(targetExistingSlots);
+  const newTime = minToTime(clickMin);
 
   const newSlot = Object.assign({}, dragSlotData.slot, {
     id: isCopy ? uid() : dragSlotData.slot.id,
