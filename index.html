@@ -5110,7 +5110,7 @@ function renderDateWeekGrid(){
 function findNextAvailableMinutes(arr){
 
   const DAY_START_MIN = 8*60; // broadcast day starts at 08:00
-  const MIN_GAP_MIN = 5; // ignore tiny slivers, not worth suggesting
+  const MIN_GAP_MIN = 20; // needs real room for the add-button to render without overlapping the next slot
 
   if(!arr.length) return DAY_START_MIN;
 
