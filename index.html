@@ -457,6 +457,12 @@ table.episodes tr:hover td{
   background:#20242a;
 }
 
+.timeline-slot.multi-selected{
+  outline:3px solid var(--accent-2);
+  outline-offset:-3px;
+  background:#1c2f2a;
+}
+
 .timeline-slot .t{
   white-space:nowrap;
   overflow:hidden;
@@ -1294,6 +1300,19 @@ table.episodes tr:hover td{
 
         <button class="btn secondary small" id="week-word">
           Εξαγωγή Word (.doc)
+        </button>
+
+        <button
+          class="btn secondary small"
+          id="week-multiselect-toggle">
+          &#9745; Πολλαπλή επιλογή
+        </button>
+
+        <button
+          class="btn small hidden"
+          id="week-copy-selected"
+          style="background:var(--accent-2);color:#0a1a17;">
+          &#128203; Αντιγραφή επιλεγμένων
         </button>
 
         <button
@@ -2968,6 +2987,7 @@ async function writeBackPlayDate(slot, dateISO){
 
   const show = state.shows.find(s => s.id === slot.showId);
   if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
+  if(show.name.trim().toUpperCase() === 'CUSTOM') return { ok:true, reason:'custom-show-skipped' };
 
   const dateStart = (show.dateStartCol !== undefined && show.dateStartCol !== null) ? show.dateStartCol : 3;
   const titleCol = show.titleCol ?? 0;
@@ -3103,6 +3123,7 @@ async function clearBackPlayDate(slot, dateISO){
 
   const show = state.shows.find(s => s.id === slot.showId);
   if(!show || show.source !== 'auto') return { ok:false, reason:'not-auto-show' };
+  if(show.name.trim().toUpperCase() === 'CUSTOM') return { ok:true, reason:'custom-show-skipped' };
 
   const dateStart = (show.dateStartCol !== undefined && show.dateStartCol !== null) ? show.dateStartCol : 3;
   const titleCol = show.titleCol ?? 0;
@@ -3944,6 +3965,10 @@ const TIMELINE_PX_PER_MINUTE = 2.45;
 let dragSlotData = null;
 let dragAutoScrollInterval = null;
 
+let multiSelectMode = false;
+let multiSelectedIds = new Set(); // holds "showId|isoOrDay|slotId" markers scoped by location
+let multiClipboard = []; // array of {showId, showName, episodeTitle, duration, sourcePath, dataRowIdx, time}
+
 function timelineBounds(daySlots){
   const all = daySlots.flatMap(slots => slots || []);
   if(!all.length){
@@ -4379,6 +4404,19 @@ function renderWeek(){
               `
               : ''
           }
+          ${
+            multiClipboard.length
+              ? `
+                <button
+                  class="add-slot-btn timeline-add"
+                  data-act="paste-multi-week"
+                  data-day="${day}"
+                  style="color:var(--accent-2);border-color:var(--accent-2);">
+                  &#128229; Επικόλληση ${multiClipboard.length} μαζικά
+                </button>
+              `
+              : ''
+          }
         `
       };
     });
@@ -4428,6 +4466,19 @@ function renderWeek(){
               data-date="${nextMondayStr}"
               style="color:var(--accent);border-color:var(--accent);">
               &#128229; Επικόλληση (${escapeHtml(episodeClipboard.episodeTitle||'')})
+            </button>
+          `
+          : ''
+      }
+      ${
+        multiClipboard.length
+          ? `
+            <button
+              class="add-slot-btn timeline-add"
+              data-act="paste-multi-day"
+              data-date="${nextMondayStr}"
+              style="color:var(--accent-2);border-color:var(--accent-2);">
+              &#128229; Επικόλληση ${multiClipboard.length} μαζικά
             </button>
           `
           : ''
@@ -5089,6 +5140,19 @@ function renderDateWeekGrid(){
                 data-date="${dateStr}"
                 style="color:var(--accent);border-color:var(--accent);">
                 &#128229; Επικόλληση (${escapeHtml(episodeClipboard.episodeTitle||'')})
+              </button>
+            `
+            : ''
+        }
+        ${
+          multiClipboard.length
+            ? `
+              <button
+                class="add-slot-btn timeline-add"
+                data-act="paste-multi-day"
+                data-date="${dateStr}"
+                style="color:var(--accent-2);border-color:var(--accent-2);">
+                &#128229; Επικόλληση ${multiClipboard.length} μαζικά
               </button>
             `
             : ''
@@ -5770,6 +5834,136 @@ document.addEventListener(
   }
 );
 
+/* ================= MULTI-SELECT ================= */
+
+function slotKey(day, date, slotId){
+  return (day||'') + '|' + (date||'') + '|' + slotId;
+}
+
+function toggleMultiSelect(slotEl, day, date, slotId){
+
+  const key = slotKey(day, date, slotId);
+
+  if(multiSelectedIds.has(key)){
+    multiSelectedIds.delete(key);
+    slotEl.classList.remove('multi-selected');
+  }else{
+    multiSelectedIds.add(key);
+    slotEl.classList.add('multi-selected');
+  }
+
+  updateMultiSelectUI();
+
+}
+
+function updateMultiSelectUI(){
+
+  const btn = document.getElementById('week-copy-selected');
+  if(!btn) return;
+
+  if(multiSelectedIds.size > 0){
+    btn.classList.remove('hidden');
+    btn.textContent = '\uD83D\uDCCB Αντιγραφή επιλεγμένων (' + multiSelectedIds.size + ')';
+  }else{
+    btn.classList.add('hidden');
+    btn.textContent = '\uD83D\uDCCB Αντιγραφή επιλεγμένων';
+  }
+
+}
+
+function collectMultiClipboard(){
+
+  const items = [];
+
+  multiSelectedIds.forEach(key => {
+
+    const parts = key.split('|');
+    const day = parts[0] || null;
+    const date = parts[1] || null;
+    const slotId = parts[2];
+
+    const arr = day ? (state.weekly[day]||[]) : getEffectiveDaySlots(date);
+    const slot = arr.find(s => s.id === slotId);
+
+    if(slot){
+      items.push({
+        showId: slot.showId,
+        showName: slot.showName,
+        episodeTitle: slot.episodeTitle,
+        duration: slot.duration,
+        sourcePath: slot.sourcePath || null,
+        dataRowIdx: slot.dataRowIdx ?? null,
+        time: slot.time
+      });
+    }
+
+  });
+
+  return items;
+
+}
+
+async function pasteMultiClipboardToDay(isWeek, dayOrDate){
+
+  if(!multiClipboard.length) return;
+
+  const createdSlots = [];
+
+  if(isWeek){
+
+    const arr = (state.weekly[dayOrDate] || []).slice();
+
+    multiClipboard.forEach(item => {
+      const newSlot = Object.assign({}, item, { id: uid(), comment: null, writtenBack: false });
+      arr.push(newSlot);
+      createdSlots.push(newSlot);
+    });
+
+    state.weekly[dayOrDate] = arr;
+
+  }else{
+
+    const entry = ensureMonthEntryForDate(dayOrDate);
+
+    const base =
+      entry.overrides[dayOrDate]
+        ? entry.overrides[dayOrDate].slice()
+        : getEffectiveDaySlots(dayOrDate).slice();
+
+    multiClipboard.forEach(item => {
+      const newSlot = Object.assign({}, item, { id: uid(), comment: null, writtenBack: false });
+      base.push(newSlot);
+      createdSlots.push(newSlot);
+    });
+
+    entry.overrides[dayOrDate] = base;
+
+  }
+
+  saveState();
+  renderWeek();
+  renderMonth();
+
+  if(googleAccessToken){
+
+    const writeDate =
+      isWeek
+        ? dateToISO(getCurrentWeekDates()[DAYS.indexOf(dayOrDate)])
+        : dayOrDate;
+
+    for(const s of createdSlots){
+      const result = await writeBackPlayDate(s, writeDate);
+      if(!result.ok && !['no-auth','not-auto-show','no-row'].includes(result.reason)){
+        alert('Δεν έγινε εγγραφή πίσω στο sheet για "' + s.episodeTitle + '": ' + result.reason);
+      }
+    }
+
+    renderShows();
+
+  }
+
+}
+
 /* ================= EVENTS ================= */
 
 document.addEventListener(
@@ -6219,7 +6413,11 @@ document.addEventListener(
 
         const day = actEl.dataset.day;
 
-        if(day){
+        if(multiSelectMode){
+
+          toggleMultiSelect(actEl, day, null, actEl.dataset.slot);
+
+        }else if(day){
 
           openEditor({
             mode:'week',
@@ -6266,11 +6464,19 @@ document.addEventListener(
 
         e.stopPropagation();
 
-        openEditor({
-          mode:'day',
-          date:actEl.dataset.date,
-          slotId:actEl.dataset.slot
-        });
+        if(multiSelectMode){
+
+          toggleMultiSelect(actEl, null, actEl.dataset.date, actEl.dataset.slot);
+
+        }else{
+
+          openEditor({
+            mode:'day',
+            date:actEl.dataset.date,
+            slotId:actEl.dataset.slot
+          });
+
+        }
 
       }
 
@@ -6442,6 +6648,17 @@ document.addEventListener(
           }
 
         }
+
+      }
+
+      else if(act === 'paste-multi-week' || act === 'paste-multi-day'){
+
+        if(!multiClipboard.length) return;
+
+        const isWeek = act === 'paste-multi-week';
+        const dayOrDate = isWeek ? actEl.dataset.day : actEl.dataset.date;
+
+        await pasteMultiClipboardToDay(isWeek, dayOrDate);
 
       }
 
@@ -7258,6 +7475,50 @@ document.addEventListener(
 
     }
 
+    if(t.id === 'week-multiselect-toggle'){
+
+      multiSelectMode = !multiSelectMode;
+
+      t.textContent =
+        multiSelectMode
+          ? '\u2612 Πολλαπλή επιλογή (ενεργή)'
+          : '\u2611 Πολλαπλή επιλογή';
+
+      t.classList.toggle('btn', true);
+
+      if(!multiSelectMode){
+        multiSelectedIds.clear();
+        renderWeek();
+        renderMonth();
+      }
+
+      updateMultiSelectUI();
+
+      return;
+
+    }
+
+    if(t.id === 'week-copy-selected'){
+
+      if(!multiSelectedIds.size) return;
+
+      multiClipboard = collectMultiClipboard();
+
+      multiSelectedIds.clear();
+      multiSelectMode = false;
+
+      const toggleBtn = document.getElementById('week-multiselect-toggle');
+      if(toggleBtn) toggleBtn.textContent = '\u2611 Πολλαπλή επιλογή';
+
+      updateMultiSelectUI();
+
+      renderWeek();
+      renderMonth();
+
+      return;
+
+    }
+
     if(
       t.id === 'week-clear'
     ){
@@ -7464,12 +7725,27 @@ document.addEventListener('dragstart', e => {
   const slot = arr.find(s => s.id === slotEl.dataset.slot);
   if(!slot) return;
 
-  dragSlotData = {
-    slot: Object.assign({}, slot),
-    sourceIsWeek: isWeek,
-    sourceDay: slotEl.dataset.day || null,
-    sourceDate: slotEl.dataset.date || null
-  };
+  const thisKey = slotKey(slotEl.dataset.day || null, slotEl.dataset.date || null, slotEl.dataset.slot);
+
+  if(multiSelectMode && multiSelectedIds.has(thisKey) && multiSelectedIds.size > 1){
+
+    // dragging a selected slot while multiple are selected — drag them all together
+    dragSlotData = {
+      multi: true,
+      items: collectMultiClipboard()
+    };
+
+  }else{
+
+    dragSlotData = {
+      multi: false,
+      slot: Object.assign({}, slot),
+      sourceIsWeek: isWeek,
+      sourceDay: slotEl.dataset.day || null,
+      sourceDate: slotEl.dataset.date || null
+    };
+
+  }
 
   e.dataTransfer.effectAllowed = 'copyMove';
 
@@ -7533,6 +7809,29 @@ document.addEventListener('drop', async e => {
   const targetDay = track.dataset.day || null;
   const targetDate = track.dataset.date || null;
   const isWeekTarget = !!targetDay;
+
+  if(dragSlotData.multi){
+
+    multiClipboard = dragSlotData.items;
+
+    await pasteMultiClipboardToDay(isWeekTarget, isWeekTarget ? targetDay : targetDate);
+
+    multiClipboard = [];
+    multiSelectedIds.clear();
+    multiSelectMode = false;
+
+    const toggleBtn = document.getElementById('week-multiselect-toggle');
+    if(toggleBtn) toggleBtn.textContent = '\u2611 Πολλαπλή επιλογή';
+
+    updateMultiSelectUI();
+    renderWeek();
+    renderMonth();
+
+    dragSlotData = null;
+
+    return;
+
+  }
 
   const startMin = parseFloat(track.dataset.startMin) || 0;
   const rect = track.getBoundingClientRect();
