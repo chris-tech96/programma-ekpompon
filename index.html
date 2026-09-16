@@ -1630,12 +1630,89 @@ async function storageGet(key){
   }
 }
 
+let undoStack = [];
+let redoStack = [];
+let lastKnownSnapshot = null;
+let isRestoringHistory = false;
+
+function snapshotScheduleState(){
+  return JSON.stringify({
+    weekly: state.weekly,
+    monthly: state.monthly
+  });
+}
+
 async function saveState(){
+
+  if(!isRestoringHistory){
+
+    if(lastKnownSnapshot !== null){
+
+      undoStack.push(lastKnownSnapshot);
+
+      if(undoStack.length > 50)
+        undoStack.shift();
+
+      redoStack = [];
+
+    }
+
+    lastKnownSnapshot = snapshotScheduleState();
+
+  }
 
   await storageSet(
     STORAGE_KEY,
     JSON.stringify(state)
   );
+
+}
+
+async function applyHistorySnapshot(snapshotStr){
+
+  const snap = JSON.parse(snapshotStr);
+
+  state.weekly = snap.weekly;
+  state.monthly = snap.monthly;
+
+  lastKnownSnapshot = snapshotStr;
+
+  isRestoringHistory = true;
+
+  await storageSet(
+    STORAGE_KEY,
+    JSON.stringify(state)
+  );
+
+  isRestoringHistory = false;
+
+  render();
+
+}
+
+async function undoAction(){
+
+  if(!undoStack.length) return;
+
+  const current = lastKnownSnapshot;
+  const prev = undoStack.pop();
+
+  redoStack.push(current);
+
+  await applyHistorySnapshot(prev);
+
+}
+
+async function redoAction(){
+
+  if(!redoStack.length) return;
+
+  const current = lastKnownSnapshot;
+  const next = redoStack.pop();
+
+  undoStack.push(current);
+
+  await applyHistorySnapshot(next);
 
 }
 
@@ -1693,6 +1770,8 @@ async function loadState(){
   }
 
   renderTabChips();
+
+  lastKnownSnapshot = snapshotScheduleState();
 
 }
 
@@ -5634,6 +5713,30 @@ document.addEventListener(
 
     }
 
+    const typingInField =
+      ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
+
+    if(!typingInField && (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z'){
+
+      e.preventDefault();
+      undoAction();
+
+    }
+
+    if(
+      !typingInField &&
+      (e.ctrlKey || e.metaKey) &&
+      (
+        e.key.toLowerCase() === 'y' ||
+        (e.shiftKey && e.key.toLowerCase() === 'z')
+      )
+    ){
+
+      e.preventDefault();
+      redoAction();
+
+    }
+
   }
 );
 
@@ -7362,7 +7465,7 @@ document.addEventListener('drop', async e => {
 
   e.preventDefault();
 
-  const isCopy = e.ctrlKey;
+  const isCopy = true;
 
   const startMin = parseFloat(track.dataset.startMin) || 0;
   const rect = track.getBoundingClientRect();
