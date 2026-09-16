@@ -4158,6 +4158,18 @@ function buildTimelineGrid(columns, kind){
           }).join('')
         : `<div class="empty-note timeline-empty">Καμία ζώνη</div>`;
 
+    const nextAvailMin = findNextAvailableMinutes(slots);
+    const addTop = (nextAvailMin - bounds.start) * pxPerMinute;
+
+    const addButtonPositioned =
+      col.addButton
+        ? `
+          <div style="position:absolute;top:${addTop}px;left:0;right:0;">
+            ${col.addButton}
+          </div>
+        `
+        : '';
+
     return `
       <div class="timeline-day">
         <div class="day-head">
@@ -4175,8 +4187,8 @@ function buildTimelineGrid(columns, kind){
           data-kind="${kind}"
           style="height:${bodyHeight}px;">
           ${body}
+          ${addButtonPositioned}
         </div>
-        ${col.addButton || ''}
       </div>
     `;
   }).join('');
@@ -5094,6 +5106,45 @@ function renderDateWeekGrid(){
 }
 
 
+function findNextAvailableMinutes(arr){
+
+  const DAY_START_MIN = 8*60; // broadcast day starts at 08:00
+  const MIN_GAP_MIN = 5; // ignore tiny slivers, not worth suggesting
+
+  if(!arr.length) return DAY_START_MIN;
+
+  const sorted =
+    arr.slice().sort(
+      (a,b) => broadcastMinutes(a.time) - broadcastMinutes(b.time)
+    );
+
+  // gap before the very first slot
+  const firstStart = broadcastMinutes(sorted[0].time);
+  if(firstStart - DAY_START_MIN >= MIN_GAP_MIN){
+    return DAY_START_MIN;
+  }
+
+  // gaps between consecutive slots
+  let cursorEndMin = firstStart + Math.ceil((sorted[0].duration||0)/60);
+
+  for(let i=1; i<sorted.length; i++){
+
+    const nextStart = broadcastMinutes(sorted[i].time);
+
+    if(nextStart - cursorEndMin >= MIN_GAP_MIN){
+      return cursorEndMin;
+    }
+
+    const thisEnd = nextStart + Math.ceil((sorted[i].duration||0)/60);
+    if(thisEnd > cursorEndMin) cursorEndMin = thisEnd;
+
+  }
+
+  // no gap found — right after the last slot
+  return cursorEndMin;
+
+}
+
 function suggestNextTime(ctx){
 
   let arr;
@@ -5116,30 +5167,7 @@ function suggestNextTime(ctx){
   if(!arr.length)
     return '08:00';
 
-  let maxEndSec = null;
-
-  arr.forEach(s=>{
-
-    const endSec =
-      broadcastMinutes(s.time)*60 +
-      (s.duration || 0);
-
-    if(
-      maxEndSec === null ||
-      endSec > maxEndSec
-    ){
-
-      maxEndSec = endSec;
-
-    }
-
-  });
-
-  return minToTime(
-    Math.ceil(
-      maxEndSec/60
-    )
-  );
+  return minToTime(findNextAvailableMinutes(arr));
 
 }
 
