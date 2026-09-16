@@ -4159,12 +4159,13 @@ function buildTimelineGrid(columns, kind){
         : `<div class="empty-note timeline-empty">Καμία ζώνη</div>`;
 
     const nextAvailMin = findNextAvailableMinutes(slots);
-    const addTop = (nextAvailMin - bounds.start) * pxPerMinute;
+    const rawAddTop = (nextAvailMin - bounds.start) * pxPerMinute;
+    const addTop = Math.max(0, Math.min(rawAddTop, bodyHeight - 44));
 
     const addButtonPositioned =
       col.addButton
         ? `
-          <div style="position:absolute;top:${addTop}px;left:0;right:0;">
+          <div style="position:absolute;top:${addTop}px;left:0;right:0;z-index:5;">
             ${col.addButton}
           </div>
         `
