@@ -1585,6 +1585,13 @@ DAYS.forEach(d => {
 let uid = () =>
   Math.random().toString(36).slice(2,10);
 
+// Removes any slot(s) already occupying the same time as `time` in `arr`
+// (excluding `excludeId`, if given), so that placing/replacing a slot at a
+// given time never leaves two entries in the same zone.
+function removeSlotsAtTime(arr, time, excludeId){
+  return (arr || []).filter(s => s.time !== time || s.id === excludeId);
+}
+
 /* ================= GOOGLE WRITE-BACK (OAuth) ================= */
 
 let googleTokenClient = null;
@@ -5911,10 +5918,11 @@ async function pasteMultiClipboardToDay(isWeek, dayOrDate){
 
   if(isWeek){
 
-    const arr = (state.weekly[dayOrDate] || []).slice();
+    let arr = (state.weekly[dayOrDate] || []).slice();
 
     multiClipboard.forEach(item => {
       const newSlot = Object.assign({}, item, { id: uid(), comment: null, writtenBack: false });
+      arr = removeSlotsAtTime(arr, newSlot.time, newSlot.id);
       arr.push(newSlot);
       createdSlots.push(newSlot);
     });
@@ -5925,13 +5933,14 @@ async function pasteMultiClipboardToDay(isWeek, dayOrDate){
 
     const entry = ensureMonthEntryForDate(dayOrDate);
 
-    const base =
+    let base =
       entry.overrides[dayOrDate]
         ? entry.overrides[dayOrDate].slice()
         : getEffectiveDaySlots(dayOrDate).slice();
 
     multiClipboard.forEach(item => {
       const newSlot = Object.assign({}, item, { id: uid(), comment: null, writtenBack: false });
+      base = removeSlotsAtTime(base, newSlot.time, newSlot.id);
       base.push(newSlot);
       createdSlots.push(newSlot);
     });
@@ -6614,6 +6623,10 @@ document.addEventListener(
           dataRowIdx: episodeClipboard.dataRowIdx ?? null
         });
 
+        const updatedSlot = arr[idx];
+
+        arr = removeSlotsAtTime(arr, updatedSlot.time, updatedSlot.id);
+
         if(isWeek){
           state.weekly[actEl.dataset.day] = arr;
         }else{
@@ -6633,13 +6646,13 @@ document.addEventListener(
               : actEl.dataset.date;
 
           if(
-            previousSlot.showId !== arr[idx].showId ||
-            (previousSlot.episodeTitle||'').trim() !== (arr[idx].episodeTitle||'').trim()
+            previousSlot.showId !== updatedSlot.showId ||
+            (previousSlot.episodeTitle||'').trim() !== (updatedSlot.episodeTitle||'').trim()
           ){
             await clearBackPlayDate(previousSlot, writeDate);
           }
 
-          const result = await writeBackPlayDate(arr[idx], writeDate);
+          const result = await writeBackPlayDate(updatedSlot, writeDate);
 
           if(result.ok){
             renderShows();
@@ -6692,7 +6705,8 @@ document.addEventListener(
 
         if(isWeek){
 
-          const arr = (state.weekly[actEl.dataset.day] || []).slice();
+          let arr = (state.weekly[actEl.dataset.day] || []).slice();
+          arr = removeSlotsAtTime(arr, newSlot.time, newSlot.id);
           arr.push(newSlot);
           state.weekly[actEl.dataset.day] = arr;
 
@@ -6700,11 +6714,12 @@ document.addEventListener(
 
           const entry = ensureMonthEntryForDate(actEl.dataset.date);
 
-          const base =
+          let base =
             entry.overrides[actEl.dataset.date]
               ? entry.overrides[actEl.dataset.date].slice()
               : getEffectiveDaySlots(actEl.dataset.date).slice();
 
+          base = removeSlotsAtTime(base, newSlot.time, newSlot.id);
           base.push(newSlot);
           entry.overrides[actEl.dataset.date] = base;
 
@@ -7042,6 +7057,8 @@ document.addEventListener(
               s.id !== slotObj.id
           );
 
+        arr = removeSlotsAtTime(arr, slotObj.time, slotObj.id);
+
         arr.push(slotObj);
 
         state.weekly[
@@ -7071,6 +7088,8 @@ document.addEventListener(
             s =>
               s.id !== slotObj.id
           );
+
+        base = removeSlotsAtTime(base, slotObj.time, slotObj.id);
 
         base.push(slotObj);
 
@@ -7887,6 +7906,7 @@ document.addEventListener('drop', async e => {
   if(isWeekTarget){
 
     let arr = (state.weekly[targetDay] || []).filter(s => s.id !== newSlot.id);
+    arr = removeSlotsAtTime(arr, newSlot.time, newSlot.id);
     arr.push(newSlot);
     state.weekly[targetDay] = arr;
 
@@ -7900,6 +7920,7 @@ document.addEventListener('drop', async e => {
         : getEffectiveDaySlots(targetDate).slice();
 
     base = base.filter(s => s.id !== newSlot.id);
+    base = removeSlotsAtTime(base, newSlot.time, newSlot.id);
     base.push(newSlot);
     entry.overrides[targetDate] = base;
 
