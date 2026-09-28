@@ -1592,6 +1592,43 @@ function removeSlotsAtTime(arr, time, excludeId){
   return (arr || []).filter(s => s.time !== time || s.id === excludeId);
 }
 
+// Keeps only the LAST slot for each distinct time in an array (drops earlier
+// duplicates at the same time).
+function dedupeByTime(arr){
+  if(!Array.isArray(arr) || arr.length < 2) return arr;
+  const byTime = new Map();
+  arr.forEach(s => { if(s && s.time != null) byTime.set(s.time, s); });
+  return Array.from(byTime.values());
+}
+
+// Runs dedupeByTime across state.weekly and every stored day override, in
+// place. Used as a one-time cleanup migration on load.
+function dedupeAllSlotsByTime(){
+
+  let changed = false;
+
+  DAYS.forEach(day => {
+    const before = (state.weekly[day] || []).length;
+    state.weekly[day] = dedupeByTime(state.weekly[day] || []);
+    if(state.weekly[day].length !== before) changed = true;
+  });
+
+  if(state.monthly){
+    Object.keys(state.monthly).forEach(monthKey => {
+      const entry = state.monthly[monthKey];
+      if(!entry || !entry.overrides) return;
+      Object.keys(entry.overrides).forEach(dateStr => {
+        const before = (entry.overrides[dateStr] || []).length;
+        entry.overrides[dateStr] = dedupeByTime(entry.overrides[dateStr] || []);
+        if(entry.overrides[dateStr].length !== before) changed = true;
+      });
+    });
+  }
+
+  if(changed) saveState();
+
+}
+
 /* ================= GOOGLE WRITE-BACK (OAuth) ================= */
 
 let googleTokenClient = null;
@@ -1770,6 +1807,11 @@ async function loadState(){
       state.weekly[day] = [];
 
   });
+
+  // One-time cleanup: earlier versions could leave two slots at the exact
+  // same time (e.g. 00:00 / 00:30 shown twice) in the weekly template or in
+  // a day override. Keep only the LAST slot for each time, everywhere.
+  dedupeAllSlotsByTime();
 
   const now = new Date();
 
